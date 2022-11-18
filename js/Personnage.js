@@ -32,12 +32,10 @@ export class Personnage {
         this.imgNamePng = imgNamePng;
         this.assets = [];
         this.detail = json;
-        //this.sizeX = 96;
-        //this.sizeY = 112;
         this.cnvW = 128 / 2;
         this.cnvH = 120;
-        this.posX = 128;
-        this.posY = 120;
+        this.posX = 0;
+        this.posY = 0;
         this.imgId = 0;
         this.canMove = true;
         this.dirMove = 4;
@@ -56,7 +54,8 @@ export class Personnage {
     loadImg() {
         for (let i = 0; i < this.detail.nbFrames; i++) {
             this.img = new Image();
-            this.img.src = `assets/img/${this.assetsFolder}/${this.imgNamePng}${i}.png`;
+            this.img.src = `assets/img/persos/${this.assetsFolder}/${this.imgNamePng}${i}.png`;
+            //this.img.sizes.
             this.assets.push(this.img);
         }
     }
@@ -221,8 +220,8 @@ export class Personnage {
             this.ctx2D.scale(-1, 1);
         }
         this.ctx2D.drawImage(this.assets[this.imgId], 0, 0);
-        //this.ctx2D.fillStyle = "#00FFFF75";
-        //this.ctx2D.fillRect(0, 0, sizeSpriteW, sizeSpriteH);
+        this.ctx2D.fillStyle = "#00FFFF75";
+        this.ctx2D.fillRect(0, 0, sizeSpriteW, sizeSpriteH);
         this.ctx2D.restore();
     }
 
@@ -235,7 +234,7 @@ export class Personnage {
             const direction = Math.floor(Math.random() * 5);
             this.setDirMove(direction);
         }
-         else {
+        else {
             this.setDirMove(0);
         }
     }
@@ -259,63 +258,40 @@ export class Personnage {
 
 
     move() {
-        //console.log(this.plfGrid.coord_to_cell(this.posX,this.posY).state);
         switch (this.dirMove) {
-            // IDLE
-            case 0:
+            case 0: // IDLE
                 this.imgId++;
                 for (const anime of this.detail.animations) {
-                    //console.log(anime.end + 1);
                     if (this.imgId == anime.end + 1) {
                         this.imgId = this.detail.animations.find(a => a.name === 'idle').start;
                         this.onAction = false;
                     }
                 }
                 break;
-            // DROITE
-            case 1:
-                const cnvWidthBeforeLastCol = (this.bgGrid.col - 1) * this.cnvW;
-                if (this.posX < cnvWidthBeforeLastCol) {
-                    const rightCellState = this.bgGrid.coord_to_cell(this.posX + this.cnvW, this.posY).state;
-                    if (rightCellState === 0) this.posX += this.cnvW;
-                }
+            case 1: // DROITE
+                if (this.posX < this.cnv.width - this.cnvW) this.posX += 10;
                 // Animation de marche possible au bord de la grille
                 this.imgId = this.detail.animations.find(a => a.name === 'walkFwd').start;
                 break;
-            // GAUCHE
-            case 2:
-                if (this.posX > 0) {
-                    const leftCellState = this.bgGrid.coord_to_cell(this.posX - this.cnvW, this.posY).state;
-                    if (leftCellState === 0) this.posX -= this.cnvW;
-                }
+            case 2: // GAUCHE
+                if (this.posX > this.cnvW) this.posX -= 10;
+                // Animation de marche possible au bord de la grille
                 this.imgId = this.detail.animations.find(a => a.name === 'walkFwd').start;
                 break;
-            // HAUT
-            case 3:
+            case 3: // HAUT
                 if (this.posY > 0) {
-                    const topCellState = this.bgGrid.coord_to_cell(this.posX, this.posY - this.cnvH).state;
-                    if (topCellState === 0) {
-                        this.posY -= this.cnvH;
-                        // Animation de saut uniquement possible en y > 0
-                        this.imgId = this.detail.animations.find(a => a.name === 'jump').start
-                    }
+                    this.posY -= this.cnvH;
+                    this.imgId = this.detail.animations.find(a => a.name === 'jump').start
                 }
                 break;
-            // BAS
-            case 4:
-                const cnvHeightBeforeLastLin = (this.bgGrid.lig - 1) * this.cnvH;
-                if (this.posY < cnvHeightBeforeLastLin) {
-                    const bottomCellState = this.bgGrid.coord_to_cell(this.posX, this.posY + this.cnvH).state;
-                    if (bottomCellState === 0) this.posY += this.cnvH;
-                    // Animation de s'accroupir possible au sol
-                }
+            case 4: // BAS
+                if (this.posY < this.cnv.height - this.cnvH) this.posY += this.cnvH;
+                // Animation de s'accroupir possible au sol
                 this.imgId = this.detail.animations.find(a => a.name === 'crouch').start
                 break;
             default:
                 break;
         }
-
-
     }
 
     enemyClose() {

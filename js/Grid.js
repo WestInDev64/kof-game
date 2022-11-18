@@ -183,27 +183,6 @@ export class GridBG extends Grid {
     }
 
     drawBg() {
-        /* // CIEL
-        const gradient = this.ctx2D.createLinearGradient(0, 0, 0, this.cnv.height / 1.2);
-        gradient.addColorStop(0, "black");
-        gradient.addColorStop(0.33, "purple");
-        gradient.addColorStop(0.66, "blue");
-        gradient.addColorStop(1, "black");
-        this.ctx2D.fillStyle = gradient;
-        this.ctx2D.fillRect(0, 0, this.cnv.width, this.cnv.height);
-
-        // SOLEIL
-        const cercle = new Path2D();
-        cercle.arc(this.cnv.width / 2, this.cnv.height /1.25, this.cnv.width / 4, 0, 2 * Math.PI);
-        this.ctx2D.fillStyle = "yellow";
-        this.ctx2D.fill(cercle);
-        
-        // LUNE
-        const moon = new Path2D();
-        moon.arc(this.cnv.width / 2, this.cnv.height /1.25, this.cnv.width / 4, 0, 2 * Math.PI);
-        this.ctx2D.fillStyle = "yellow";
-        this.ctx2D.fill(cercle); */
-
         //console.log(this.bgLayers);
         const ratioW = this.cnv.width / this.bgLayers[this.imgId].width;
         const ratioH = this.cnv.height / this.bgLayers[this.imgId].height;
