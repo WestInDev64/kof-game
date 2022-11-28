@@ -1,12 +1,16 @@
+/* Anime peros */
 import detailanimeMai from "../assets/img/persos/Mai/detailanimeMai.js";
 import detailanimeKing from "../assets/img/persos/King/detailanimeking.js";
 import detailanimeSie from "../assets/img/persos/Sie Kensou/detailanimeSie.js";
+
+/* Anime Background */
 import animebg from "../assets/img/bg/ruins/animebg.js";
 import animebg2 from "../assets/img/bg/shion/animebg.js";
 import animebg3 from "../assets/img/bg/alley/animebg.js";
-import { Personnage, Color } from "./Personnage.js";
-import { Cell, Grid, GridBG, GridObj, GridPlatform } from "./Grid.js";
+
+import { Personnage } from "./Personnage.js";
 import { Decor } from "./Decor.js";
+
 
 const cnv = document.getElementById('myCanvas');
 const ctx = cnv.getContext('2d');
@@ -35,11 +39,11 @@ hauteur : C’est un paramètre facultatif et indique la hauteur de l’image à
 
 
 class Game {
-    constructor() {
+    constructor(canvas) {
+        this.cnv = canvas;
         this.tabPlayer = [];
         this.decor;
         this.gridBg;
-        this.gridPlatfrm = new GridPlatform(gridCol, gridLig, ctx, cnv);
         this.gridObj;
         this.gameOver = false;
         this.fps = 90;
@@ -54,12 +58,13 @@ class Game {
         this.decor = new Decor(cnv,ctx,this.bgFolder[randBg], this.nbFramesBg[randBg],this.bgAnime[randBg]);
         this.decor.init();
 
+
         //console.table(this.gridObj.grid);
         let mai = new Personnage("Mai", "Mai", "Mai Shiranui_", 'L', 1, detailanimeMai, this.gridBg, this.gridPlatfrm, cnv, ctx);
         let king = new Personnage("King", "King", "King_", 'R', 2, detailanimeKing, this.gridBg, this.gridPlatfrm, cnv, ctx);
         let king2 = new Personnage("King", "King", "King_", 'R', 2, detailanimeKing, this.gridBg, this.gridPlatfrm, cnv, ctx);
         let king3 = new Personnage("King", "King", "King_", 'R', 2, detailanimeKing, this.gridBg, this.gridPlatfrm, cnv, ctx);
-        let calum = new Personnage("Sie Kensou", "Sie Kensou", "Sie Kensou_", 'R', 2, detailanimeKing, this.gridBg, this.gridPlatfrm, cnv, ctx);
+        let calum = new Personnage("Sie Kensou", "Sie Kensou", "Sie Kensou_", 'R', 2, detailanimeSie, this.gridBg, this.gridPlatfrm, cnv, ctx);
         this.tabPlayer.push(mai);
         this.tabPlayer.push(king);
         this.tabPlayer.push(king2);
@@ -74,7 +79,6 @@ class Game {
         clearCanvas();                                          // Efface le canvas
         this.decor.drawBg();                                    // Dessine Bg
         this.decor.animeBg();                                   // Anime Bg
-        console.table(this.decor.proceduralTab);
         this.decor.drawPlf();
         //this.gridPlatfrm.drawPlf();                             // Dessine plateforme
         //this.gridObj.drawObj();                                 // Dessine Item
@@ -85,6 +89,11 @@ class Game {
         //console.log(this.gridPlatfrm);
         //this.gridBg.enemyClose();
         for (let player of this.tabPlayer) {
+            player.hp -= 0.5;
+            if(player.hp < 0){
+                player.hp = 100;
+            }
+            //console.log(player.hp);
             player.animeRandom();                               // Anime aléatoire
             player.move();                                      // Déplacement
             player.draw();                                      // Dessine perso
@@ -110,6 +119,37 @@ class Game {
         this.timestamp = 90;
         window.document.location.reload();
     }
+
+    onResize() {
+        const baseW = 640;
+        const baseH = 480;
+      
+        const ratioW = innerWidth / baseW;
+        const ratioH = innerHeight / baseH;
+        const ratio = Math.min(ratioW, ratioH);
+        const w = baseW * ratio;
+        const h = baseH * ratio;
+      
+        this.cnv.width = w;
+        this.cnv.height = h;
+      
+        if (this.background) {
+          this.decor._onResize();
+        }
+      
+        if (this.characters) {
+          for (let character of this.characters) {
+            character._onResize();
+          }
+        }
+      
+        if (this.platforms) {
+          for (let platform of this.platforms) {
+            platform._onResize();
+          }
+        }
+      }
+
 }
 
 function clearCanvas() {
@@ -129,8 +169,9 @@ function clearCanvas() {
 
 
 
-const game = new Game();
+const game = new Game(cnv);
 game.init();
 game.start();
 
+//window.document.addEventListener('resize', game.onResize());
 

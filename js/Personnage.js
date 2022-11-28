@@ -1,29 +1,8 @@
-
-
-// COULEUR RGB
-export class Color {
-    constructor(r, g, b) {
-        this.r = r;
-        this.g = g;
-        this.b = b;
-    }
-
-    static lerp(c1, c2, ratio) {
-        const r = Math.round((c2.r - c1.r) * ratio + c1.r);
-        const g = Math.round((c2.g - c1.g) * ratio + c1.g);
-        const b = Math.round((c2.b - c1.b) * ratio + c1.b);
-
-        return new Color(r, g, b);
-    }
-
-    toString() {
-        return `rgb(${this.r}, ${this.g}, ${this.b})`;
-    }
-}
+import { HealthBar, Color } from "./HealthBar.js";
 
 // PERSONNAGE
 export class Personnage {
-    constructor(name, assetsFolder, imgNamePng, startPosition, codePlayer, json, bgGrid, plfGrid, canvas, ctx) {
+    constructor(name, assetsFolder, imgNamePng, startPosition, codePlayer, json, bgGrid, plfGrid, canvas, ctx, hpbar) {
         this.name = name;
         this.codePlayer = codePlayer;
         this.hp = 100;
@@ -49,6 +28,7 @@ export class Personnage {
         this.plfGrid = plfGrid;
         this.cnv = canvas;
         this.ctx2D = ctx;
+        this.hpBar;
     }
 
     loadImg() {
@@ -73,116 +53,11 @@ export class Personnage {
             this.posX = col * this.cnvW;
             this.posY = lin * this.cnvH;
         }
-        //this.healthBar();
-        this.rodolpheBar();
+        this.hpBar = new HealthBar(this, this.cnv, this.ctx2D, this.posX, this.posY, this.hp, this.hpMax, this.cnvW, this.cnvH);
     }
 
-    healthBar() {
-        this.ctx2Dx.fillStyle = "#000000";
-        this.ctx2Dx.fillRect(this.posX, this.posY, this.hpMax, 25);
-        if (this.hpMax * 0.75 < this.hp) {
-            this.ctx2Dx.fillStyle = "#00FF00";
-        }
-        if (this.hpMax * 0.75 > this.hp) {
-            this.ctx2Dx.fillStyle = "#FFFF00";
-        }
-        if (this.hpMax * 0.50 > this.hp) {
-            this.ctx2Dx.fillStyle = "#FF9900";
-        }
-        if (this.hpMax * 0.25 > this.hp) {
-            this.ctx2Dx.fillStyle = "#FF0000";
-        }
-        if (this.hp <= 0) {
-            this.hp = 0;
-            this.kO = true;
-            this.ctx2Dx.fillStyle = "#FF0000";
-        }
-        this.ctx2Dx.fillRect(this.posX, this.posY, this.hp, 25);
-    }
+    
 
-    rodolpheBar() {
-
-        const map = (v, srcMin, srcMax, dstMin, dstMax) => {
-            return (v - srcMin) * (dstMax - dstMin) / (srcMax - srcMin) + dstMin;
-        };
-
-        this.ctx2D.save();
-        this.ctx2D.translate(this.posX, this.posY);
-
-        const life = this.hp;
-        const lifeMax = this.hpMax;
-        const barSize = this.cnvW;
-
-        // Background
-        this.ctx2D.fillStyle = "#000";
-        this.ctx2D.beginPath();
-        this.ctx2D.moveTo(0, 10);
-        this.ctx2D.lineTo(5, 0);
-        this.ctx2D.lineTo(barSize, 0);
-        this.ctx2D.lineTo(barSize - 5, 10);
-        this.ctx2D.closePath();
-        this.ctx2D.fill();
-
-        // Life
-        const lifeRatio = life / lifeMax;
-        const red = new Color(255, 0, 0);
-        const orange = new Color(255, 176, 0);
-        const yellow = new Color(255, 255, 0);
-        const green = new Color(85, 255, 85);
-
-        if (lifeRatio > 0.66)
-            this.ctx2D.fillStyle = Color.lerp(yellow, green, (lifeRatio - 0.66) * 3).toString();
-        else if (lifeRatio > 0.33)
-            this.ctx2D.fillStyle = Color.lerp(orange, yellow, (lifeRatio - 0.33) * 3).toString();
-        else
-            this.ctx2D.fillStyle = Color.lerp(red, orange, lifeRatio * 3).toString();
-
-        this.ctx2D.beginPath();
-        this.ctx2D.moveTo(0, 10);
-        const x = Math.round(lifeRatio * barSize);
-        if (x <= 5) {
-            const y = map(x, 0, 5, 10, 0);
-            this.ctx2D.lineTo(x, y);
-            this.ctx2D.lineTo(x, 10);
-        } else if (x < barSize - 5) {
-            //console.clear();
-            //console.log(x)
-            this.ctx2D.lineTo(5, 0);
-            this.ctx2D.lineTo(x, 0);
-            this.ctx2D.lineTo(x, 10);
-        } else {
-            const y = map(x, barSize - 5, barSize, 10, 0);
-            this.ctx2D.lineTo(5, 0);
-            this.ctx2D.lineTo(x, 0);
-            this.ctx2D.lineTo(x, y);
-            this.ctx2D.lineTo(barSize - 5, 10);
-        }
-        this.ctx2D.closePath();
-        this.ctx2D.fill();
-
-        // Reflet
-        this.ctx2D.fillStyle = "#fff8";
-        this.ctx2D.beginPath();
-        this.ctx2D.moveTo(2, 6);
-        this.ctx2D.lineTo(4, 2);
-        this.ctx2D.lineTo(barSize - 1, 2);
-        this.ctx2D.lineTo(barSize - 3, 6);
-        this.ctx2D.closePath();
-        this.ctx2D.fill();
-
-        // Border
-        this.ctx2D.strokeStyle = "#000";
-        this.ctx2D.lineWidth = 2;
-        this.ctx2D.beginPath();
-        this.ctx2D.moveTo(0, 10);
-        this.ctx2D.lineTo(5, 0);
-        this.ctx2D.lineTo(barSize, 0);
-        this.ctx2D.lineTo(barSize - 5, 10);
-        this.ctx2D.closePath();
-        this.ctx2D.stroke();
-
-        this.ctx2D.restore();
-    }
 
     setDirMove(val) {
         this.dirMove = val;
@@ -209,11 +84,13 @@ export class Personnage {
          * Restore le contexte à sa forme initiale
          */
         //this.healthBar();
-        this.rodolpheBar();
         this.ctx2D.save();
         // Tailles dynamiques en fonction du sprite
         let sizeSpriteW = this.assets[this.imgId].width;
         let sizeSpriteH = this.assets[this.imgId].height;
+        /**
+         * Je translate en X -> largeur de grille / 2 -  (32px) - largeur sprite (30px ) 
+         */
         this.ctx2D.translate((this.posX + this.cnvW / 2) - sizeSpriteW / 2, (this.posY + this.cnvH) - sizeSpriteH);
         if (this.dirInverse) {
             this.ctx2D.translate(sizeSpriteW, 0);
@@ -222,7 +99,10 @@ export class Personnage {
         this.ctx2D.drawImage(this.assets[this.imgId], 0, 0);
         this.ctx2D.fillStyle = "#00FFFF75";
         this.ctx2D.fillRect(0, 0, sizeSpriteW, sizeSpriteH);
+        
+        //console.log(this.hpBar);
         this.ctx2D.restore();
+        this.hpBar.rodolpheBar();
     }
 
     animeRandom() {
