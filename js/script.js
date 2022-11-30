@@ -1,7 +1,10 @@
-/* Anime peros */
+/* Anime perso */
 import detailanimeMai from "../assets/img/persos/Mai/detailanimeMai.js";
 import detailanimeKing from "../assets/img/persos/King/detailanimeking.js";
 import detailanimeSie from "../assets/img/persos/Sie Kensou/detailanimeSie.js";
+import detailanimeKyo from "../assets/img/persos/Kyo/detailanimeKyo.js";
+import detailanimeKim from "../assets/img/persos/Kim Kaphwan/detailanimeKim.js";
+import detailanimeTerry from "../assets/img/persos/Terry Bogard/detailanimeTerry.js";
 
 /* Anime Background */
 import animebg from "../assets/img/bg/ruins/animebg.js";
@@ -65,11 +68,17 @@ class Game {
         let king2 = new Personnage("King", "King", "King_", 'R', 2, detailanimeKing, this.gridBg, this.gridPlatfrm, cnv, ctx);
         let king3 = new Personnage("King", "King", "King_", 'R', 2, detailanimeKing, this.gridBg, this.gridPlatfrm, cnv, ctx);
         let calum = new Personnage("Sie Kensou", "Sie Kensou", "Sie Kensou_", 'R', 2, detailanimeSie, this.gridBg, this.gridPlatfrm, cnv, ctx);
+        let calum2 = new Personnage("Kyo", "Kyo", "Kyo Kusanagi_", 'L', 2, detailanimeKyo, this.gridBg, this.gridPlatfrm, cnv, ctx);
+        let calum3 = new Personnage("Kim Kaphwan", "Kim Kaphwan", "Kim Kaphwan_", 'L', 2, detailanimeKim, this.gridBg, this.gridPlatfrm, cnv, ctx);
+        let calum4 = new Personnage("Terry Bogard", "Terry Bogard", "Terry Bogard_", 'R', 2, detailanimeTerry, this.gridBg, this.gridPlatfrm, cnv, ctx);
         this.tabPlayer.push(mai);
         this.tabPlayer.push(king);
         this.tabPlayer.push(king2);
         this.tabPlayer.push(king3);
         this.tabPlayer.push(calum);
+        this.tabPlayer.push(calum2);
+        this.tabPlayer.push(calum3);
+        this.tabPlayer.push(calum4);
         for (let player of this.tabPlayer) {
             player.init();
         }
