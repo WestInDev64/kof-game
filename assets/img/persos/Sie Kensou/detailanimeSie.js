@@ -1,5 +1,5 @@
 export default {
-    nbFrames: 526,
+    nbFrames: 226,
     animations: [
         {
             name: "idle",
@@ -38,8 +38,8 @@ export default {
         },
         {
             name: "ko",
-            start: 522,
-            end: 525,
+            start: 184,
+            end: 191,
         }
     ]
 };
