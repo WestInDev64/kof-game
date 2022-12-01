@@ -7,6 +7,7 @@
 /** @preserve SAT.js - Version 0.9.0 - Copyright 2012 - 2021 - Jim Riecken <jimr@jimr.ca> - released under the MIT License. https://github.com/jriecken/sat-js */
 
 /*global define: false, module: false*/
+
 /*jshint shadow:true, sub:true, forin:true, noarg:true, noempty:true,
   eqeqeq:true, bitwise:true, strict:true, undef:true,
   curly:true, browser:true */
@@ -1056,3 +1057,5 @@
 
   return SAT;
 }));
+
+

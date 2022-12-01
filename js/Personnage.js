@@ -29,7 +29,18 @@ export class Personnage {
         this.cnv = canvas;
         this.ctx2D = ctx;
         this.hpBar;
+        this.polygons = {
+            idle: new SAT.Polygon(new SAT.Vector(0, 0),
+                [new SAT.Polygon(),
+                new SAT.Vector(0, this.cnvH),
+                new SAT.Vector(this.cnvW, this.cnvH),
+                new SAT.Vector(this.cnvW, 0)
+                ])
+
+        }
     }
+
+
 
     loadImg() {
         for (let i = 0; i < this.detail.nbFrames; i++) {
@@ -56,19 +67,6 @@ export class Personnage {
         this.hpBar = new HealthBar(this, this.cnv, this.ctx2D, this.posX, this.posY, this.hp, this.hpMax, this.cnvW, this.cnvH);
     }
 
-    
-
-
-    setDirMove(val) {
-        this.dirMove = val;
-    }
-
-    getPosX() {
-        return this.posX;
-    }
-    getPosY() {
-        return this.posY;
-    }
 
     idle() {
         this.dirMove = 0;
@@ -99,10 +97,21 @@ export class Personnage {
         this.ctx2D.drawImage(this.assets[this.imgId], 0, 0);
         this.ctx2D.fillStyle = "#00FFFF75";
         this.ctx2D.fillRect(0, 0, sizeSpriteW, sizeSpriteH);
-        
-        //console.log(this.hpBar);
-        this.ctx2D.restore();
+        this.drawPolygon(this.polygons.idle);                           // Dessine le polygon pour la collision
+        this.ctx2D.restore();                                           // Restore le contexte
         this.hpBar.rodolpheBar();
+    }
+
+    drawPolygon(polygon) {
+        this.ctx2D.beginPath();
+        this.ctx2D.moveTo(polygon.points[0].x, polygon.points[0].y);
+        for (let i = 1; i < polygon.points.length; i++) {
+            this.ctx2D.lineTo(polygon.points[i].x, polygon.points[i].y);
+        }
+        this.ctx2D.lineTo(polygon.points[0].x, polygon.points[0].y);
+        this.ctx2D.strokeStyle = "#FF0000";
+        this.ctx2D.stroke();
+        this.ctx2D.closePath();
     }
 
     animeRandom() {
@@ -112,10 +121,10 @@ export class Personnage {
         const shouldMove = Math.random() > 0.85;
         if (isIdle && shouldMove) {
             const direction = Math.floor(Math.random() * 5);
-            this.setDirMove(direction);
+            this.dirMove = direction;
         }
         else {
-            this.setDirMove(0);
+            this.dirMove = 0;
         }
     }
 
