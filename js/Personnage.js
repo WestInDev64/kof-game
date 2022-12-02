@@ -39,6 +39,7 @@ export class Personnage {
         this.onAction = false;
         this.onHit = false;
         this.isCollide = false;
+        this.isJumping = false;
 
         /* Objets rattachés */
         this.hpBar;
@@ -145,8 +146,8 @@ export class Personnage {
     }
 
 
-    action() {
-        switch (this.actionNum) {
+    action(value) {
+        switch (value) {
             case 0:
                 this.imgId = this.detail.animations.find(a => a.name === 'kick').start;
                 break;
@@ -162,12 +163,13 @@ export class Personnage {
     }
 
 
-    move() {
-        switch (this.dirMove) {
+    move(value) {
+        switch (value) {
             case 0: // IDLE
                 this.imgId++;
                 for (const anime of this.detail.animations) {
                     if (this.imgId == anime.end + 1) {
+                        console.log(anime.name);
                         this.imgId = this.detail.animations.find(a => a.name === 'idle').start;
                         this.onAction = false;
                     }
@@ -176,17 +178,28 @@ export class Personnage {
             case 1: // DROITE
                 if (this.posX < this.cnv.width - this.cnvW && (this.isCollide == false)) this.posX += 10;
                 // Animation de marche possible au bord de la grille
-                this.imgId = this.detail.animations.find(a => a.name === 'walkFwd').start;
+                const animD = this.detail.animations.find(a => a.name === 'walkFwd');
+                if (animD.start > this.imgId || animD.end <= this.imgId)
+                    this.imgId = animD.start;
                 break;
             case 2: // GAUCHE
                 if (this.posX > this.cnvW && (this.isCollide == false)) this.posX -= 10;
                 // Animation de marche possible au bord de la grille
-                this.imgId = this.detail.animations.find(a => a.name === 'walkFwd').start;
+                const animG = this.detail.animations.find(a => a.name === 'walkFwd');
+                if (animG.start > this.imgId || animG.end <= this.imgId)
+                    this.imgId = animG.start;
+                //this.imgId = this.detail.animations.find(a => a.name === 'walkFwd').start;
                 break;
             case 3: // HAUT
-                if (this.posY > 0) {
+                if (!this.isJumping && this.posY >= this.cnvH) {
+                    this.isJumping = true;
                     this.posY -= this.cnvH;
                     this.imgId = this.detail.animations.find(a => a.name === 'jump').start
+                }
+                const animU = this.detail.animations.find(a => a.name === 'jump');
+                if (animU.start > this.imgId || animU.end <= this.imgId) {
+                    this.imgId = animU.start;
+                    this.isJumping = false;
                 }
                 break;
             case 4: // BAS
@@ -204,7 +217,8 @@ export class Personnage {
         // sinon je retourne false
         const response = new SAT.Response();
         const collided = SAT.testPolygonPolygon(this.polygons, target, response);
-        console.log("collide : " + collided);
+        //if (collided) console.log(response);
+        //console.log("collide : " + collided);
         return collided;
     }
 
@@ -278,30 +292,61 @@ export class Personnage {
 
     controls(event) {
         switch (event.key) {
-            case 'q':
-                // gaucheq
-                console.log("qq");
-                this.dirMove = 2;
-                this.move();
-                break;
-            case 'z':
-                // haut
-                console.log("z");
-                this.dirMove = 3;
-                this.move();
-                break;
-            case 'd':
-                console.log("d");
-                // droite
+
+            // Droite
+            case "ArrowRight":
                 this.dirMove = 1;
-                this.move();
+                this.move(this.dirMove);
                 break;
-            case 's':
+
+            // Gauche
+            case "ArrowLeft":
+                this.dirMove = 2;
+                this.move(this.dirMove);
+                break;
+
+            // Sauter
+            case "ArrowUp":
+                this.dirMove = 3;
+                this.move(this.dirMove);
+                break;
+
+            // Se Baisser
+            case "ArrowDown":
                 console.log("s");
                 this.dirMove = 4;
-                this.move();
+                this.move(this.dirMove);
                 break;
+
+            // Coup de poing
+            case 'w':
+                this.actionNum = 0;
+                this.action(this.actionNum);
+                break;
+
+            // Coup de pied
+            case 'x':
+                this.actionNum = 0;
+                this.action(this.actionNum);
+                break;
+
+            // Dommage
+            case 'c':
+                this.actionNum = 1;
+                this.action(this.actionNum);
+                break;
+
+            // K.O
+            case 'v':
+                this.actionNum = 2;
+                this.action(this.actionNum);
+                break;
+
+            // Idle
             default:
+                console.log("idle")
+                this.dirMove = 0
+                this.move(this.dirMove);
                 break;
         }
     }

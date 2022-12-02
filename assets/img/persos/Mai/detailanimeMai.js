@@ -33,8 +33,8 @@ export default {
         },
         {
             name: "dammaged",
-            start: 23,
-            end: 25,
+            start: 509,
+            end: 512,
         },
         {
             name: "ko",

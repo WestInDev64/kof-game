@@ -82,12 +82,12 @@ class Game {
         clearCanvas();                                          // Efface le canvas
         this.decor.drawBg();                                    // Dessine Bg
         this.decor.animeBg();                                   // Anime Bg
-        this.decor.drawPlf();
+        this.decor.drawPlf();                                   // Dessine Plateforme
 
 
         for (let player of this.tabPlayer) {
             player.animeRandom();                               // Anime aléatoire
-            player.move();                                      // Déplacement
+            player.move(0);                                      // Déplacement
             player.draw();                                      // Dessine perso
             if (player.kO) {
                 // restart dans 1s
@@ -104,9 +104,6 @@ class Game {
             }
 
         }
-
-
-
 
     }
 
