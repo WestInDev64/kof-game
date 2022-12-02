@@ -122,7 +122,7 @@ export class Personnage {
 
     updateDynamicObj() {
         /* Polygon de collision en fonction du sprite */
-        this.polygons = new SAT.Polygon(new SAT.Vector(0, 0),
+        this.polygons = new SAT.Polygon(new SAT.Vector(this.posX, this.posY),
             [new SAT.Vector(this.currentSpriteW * 0.25, 0),
             new SAT.Vector(this.currentSpriteW * 0.25, this.currentSpriteH),
             new SAT.Vector(this.currentSpriteW * 0.75, this.currentSpriteH),
@@ -204,6 +204,7 @@ export class Personnage {
         // sinon je retourne false
         const response = new SAT.Response();
         const collided = SAT.testPolygonPolygon(this.polygons, target, response);
+        console.log("collide : " + collided);
         return collided;
     }
 
@@ -275,40 +276,37 @@ export class Personnage {
         }
     }
 
-    controls() {
-        window.document.addEventListener('keypress', (event) => {
-            switch (event.key) {
-                case 'q':
-                    // gaucheq
-                    console.log("qq");
-                    this.dirMove = 2;
-                    this.move();
-                    break;
-                case 'z':
-                    // haut
-                    console.log("z");
-                    this.dirMove = 3;
-                    this.move();
-                    break;
-                case 'd':
-                    console.log("d");
-                    // droite
-                    this.dirMove = 1;
-                    this.move();
-                    break;
-                case 's':
-                    console.log("s");
-                    this.dirMove = 4;
-                    this.move();
-                    break;
-                default:
-                    break;
-            }
-        })
+    controls(event) {
+        switch (event.key) {
+            case 'q':
+                // gaucheq
+                console.log("qq");
+                this.dirMove = 2;
+                this.move();
+                break;
+            case 'z':
+                // haut
+                console.log("z");
+                this.dirMove = 3;
+                this.move();
+                break;
+            case 'd':
+                console.log("d");
+                // droite
+                this.dirMove = 1;
+                this.move();
+                break;
+            case 's':
+                console.log("s");
+                this.dirMove = 4;
+                this.move();
+                break;
+            default:
+                break;
+        }
     }
-
-
 }
+
 
 function getRandomArbitrary(min, max) {
     return Math.floor(Math.random() * (max - min) + min);

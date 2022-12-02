@@ -17,8 +17,8 @@ export class Decor {
         this.proceduralTab = [];
         this.platformW = 128 / 2;
         this.platformH = 120 / 8;
-        this.lig = 4;
-        this.col = 10;
+        this.spriteWidth;
+        this.spriteHeight;
     }
 
     /* Chargement du Background */
@@ -34,6 +34,8 @@ export class Decor {
     init() {
         this.loadBg();
         this.procedural();
+        this.spriteWidth = this.bgLayers[this.imgId].width;
+        this.spriteHeight = this.bgLayers[this.imgId].height;
     }
 
     /* Dessing Background */
@@ -103,4 +105,18 @@ export class Decor {
         }
 
     }
+
+    updatePosition() {
+        this.position.x = this.gridPosition.x * this.tileWidth;
+        this.position.y = this.gridPosition.y * this.tileHeight;
+      }
+    
+
+
+    _onResize() {
+        this.bgLayers[0].width = this.cnv.width / 16;
+        this.bgLayers[0].height = this.cnv.height / 9;
+
+        this.updatePosition();
+      }
 }

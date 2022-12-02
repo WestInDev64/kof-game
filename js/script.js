@@ -63,16 +63,16 @@ class Game {
         //console.table(this.gridObj.grid);
         let mai = new Personnage("Mai", "Mai", "Mai Shiranui_", 'L', 1, detailanimeMai, cnv, ctx);
         let king = new Personnage("King", "King", "King_", 'R', 2, detailanimeKing, cnv, ctx);
-        let calum = new Personnage("Sie Kensou", "Sie Kensou", "Sie Kensou_", 'R', 2, detailanimeSie, cnv, ctx);
-        let calum2 = new Personnage("Kyo", "Kyo", "Kyo Kusanagi_", 'L', 2, detailanimeKyo, cnv, ctx);
-        let calum3 = new Personnage("Kim Kaphwan", "Kim Kaphwan", "Kim Kaphwan_", 'L', 2, detailanimeKim, cnv, ctx);
-        let calum4 = new Personnage("Terry Bogard", "Terry Bogard", "Terry Bogard_", 'R', 2, detailanimeTerry, cnv, ctx);
+        //let calum = new Personnage("Sie Kensou", "Sie Kensou", "Sie Kensou_", 'R', 2, detailanimeSie, cnv, ctx);
+        //let calum2 = new Personnage("Kyo", "Kyo", "Kyo Kusanagi_", 'L', 2, detailanimeKyo, cnv, ctx);
+        //let calum3 = new Personnage("Kim Kaphwan", "Kim Kaphwan", "Kim Kaphwan_", 'L', 2, detailanimeKim, cnv, ctx);
+        //let calum4 = new Personnage("Terry Bogard", "Terry Bogard", "Terry Bogard_", 'R', 2, detailanimeTerry, cnv, ctx);
         this.tabPlayer.push(mai);
         this.tabPlayer.push(king);
-        this.tabPlayer.push(calum);
-        this.tabPlayer.push(calum2);
-        this.tabPlayer.push(calum3);
-        this.tabPlayer.push(calum4);
+        //this.tabPlayer.push(calum);
+        //this.tabPlayer.push(calum2);
+        //this.tabPlayer.push(calum3);
+        //this.tabPlayer.push(calum4);
         for (let player of this.tabPlayer) {
             player.init();
         }
@@ -88,18 +88,17 @@ class Game {
         for (let player of this.tabPlayer) {
             player.animeRandom();                               // Anime aléatoire
             player.move();                                      // Déplacement
-            if (player.name == "Mai") {
-                player.controls();
-            }
             player.draw();                                      // Dessine perso
             if (player.kO) {
                 // restart dans 1s
                 this.resDefer();
             }
         }
+
+        // A chaque frame 
         for (let player of this.tabPlayer) {
             for (let i = 0; i < this.tabPlayer.length; i++) {
-                if (player != this.tabPlayer[i]) {
+                if (player.name !== this.tabPlayer[i].name) {
                     player.isCollide = player.is_collide(this.tabPlayer[i].polygons);
                 }
             }
@@ -140,13 +139,13 @@ class Game {
         this.cnv.width = w;
         this.cnv.height = h;
 
-        if (this.background) {
+        if (this.decor) {
             this.decor._onResize();
         }
 
-        if (this.characters) {
-            for (let character of this.characters) {
-                character._onResize();
+        if (this.tabPlayer) {
+            for (let player of this.tabPlayer) {
+                player._onResize();
             }
         }
 
@@ -174,7 +173,9 @@ function clearCanvas() {
     ctx.fillRect(0, 0, cnv.width, cnv.height);
 }
 
-
+window.document.addEventListener('keydown', event => {
+    game.tabPlayer[0].controls(event);
+});
 
 const game = new Game(cnv);
 game.init();
@@ -182,4 +183,6 @@ game.start();
 
 
 //window.document.addEventListener('resize', game.onResize());
+
+
 
