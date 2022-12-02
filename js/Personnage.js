@@ -2,33 +2,47 @@ import { HealthBar, Color } from "./HealthBar.js";
 
 // PERSONNAGE
 export class Personnage {
-    constructor(name, assetsFolder, imgNamePng, startPosition, codePlayer, json, bgGrid, plfGrid, canvas, ctx, hpbar) {
+    constructor(name, assetsFolder, imgNamePng, startPosition, codePlayer, json, canvas, ctx) {
+        /* Rendu */
+        this.cnv = canvas;
+        this.ctx2D = ctx;
+
+        /* Details perso */
         this.name = name;
         this.codePlayer = codePlayer;
         this.hp = 100;
         this.hpMax = 100;
-        this.assetsFolder = assetsFolder;
+        this.kO = false;
+        this.startPosition = startPosition;
+
+        /* Sprites & animations */
         this.imgNamePng = imgNamePng;
+        this.assetsFolder = assetsFolder;
         this.assets = [];
+        this.imgId = 0;
         this.detail = json;
+        this.currentSpriteH;
+        this.currentSpriteW;
+        this.img;
+
+        /* Position taille  */
         this.cnvW = 128 / 2;
         this.cnvH = 120;
         this.posX = 0;
         this.posY = 0;
-        this.imgId = 0;
+        this.dirInverse = false;
+
+        /* Déplacements - Mouvements*/
         this.canMove = true;
         this.dirMove = 4;
         this.actionNum = 0;
         this.onAction = false;
         this.onHit = false;
-        this.kO = false;
-        this.dirInverse = false;
-        this.startPosition = startPosition;
-        this.bgGrid = bgGrid;
-        this.plfGrid = plfGrid;
-        this.cnv = canvas;
-        this.ctx2D = ctx;
+        this.isCollide = false;
+
+        /* Objets rattachés */
         this.hpBar;
+        this.polygons;
     }
 
     loadImg() {
@@ -56,19 +70,6 @@ export class Personnage {
         this.hpBar = new HealthBar(this, this.cnv, this.ctx2D, this.posX, this.posY, this.hp, this.hpMax, this.cnvW, this.cnvH);
     }
 
-    
-
-
-    setDirMove(val) {
-        this.dirMove = val;
-    }
-
-    getPosX() {
-        return this.posX;
-    }
-    getPosY() {
-        return this.posY;
-    }
 
     idle() {
         this.dirMove = 0;
@@ -86,23 +87,47 @@ export class Personnage {
         //this.healthBar();
         this.ctx2D.save();
         // Tailles dynamiques en fonction du sprite
-        let sizeSpriteW = this.assets[this.imgId].width;
-        let sizeSpriteH = this.assets[this.imgId].height;
+        this.currentSpriteW = this.assets[this.imgId].width;
+        this.currentSpriteH = this.assets[this.imgId].height;
         /**
          * Je translate en X -> largeur de grille / 2 -  (32px) - largeur sprite (30px ) 
          */
-        this.ctx2D.translate((this.posX + this.cnvW / 2) - sizeSpriteW / 2, (this.posY + this.cnvH) - sizeSpriteH);
+        this.ctx2D.translate((this.posX + this.cnvW / 2) - this.currentSpriteW / 2, (this.posY + this.cnvH) - this.currentSpriteH);
         if (this.dirInverse) {
-            this.ctx2D.translate(sizeSpriteW, 0);
+            this.ctx2D.translate(this.currentSpriteW, 0);
             this.ctx2D.scale(-1, 1);
         }
         this.ctx2D.drawImage(this.assets[this.imgId], 0, 0);
         this.ctx2D.fillStyle = "#00FFFF75";
-        this.ctx2D.fillRect(0, 0, sizeSpriteW, sizeSpriteH);
-        
-        //console.log(this.hpBar);
-        this.ctx2D.restore();
+        this.ctx2D.fillRect(0, 0, this.currentSpriteW, this.currentSpriteH);
+
+        this.updateDynamicObj();                                                // Met à jour les polygons
+        this.drawPolygon(this.polygons);                                   // Dessine les polygons dans le context du perso
+
+        this.ctx2D.restore();                                                   // Restore le contexte
         this.hpBar.rodolpheBar();
+    }
+
+    drawPolygon(polygon) {
+        this.ctx2D.beginPath();
+        this.ctx2D.moveTo(polygon.points[0].x, polygon.points[0].y);
+        for (let i = 0; i < polygon.points.length; i++) {
+            this.ctx2D.lineTo(polygon.points[i].x, polygon.points[i].y);
+        }
+        this.ctx2D.lineTo(polygon.points[0].x, polygon.points[0].y);
+        this.ctx2D.strokeStyle = "#FF0000";
+        this.ctx2D.stroke();
+        this.ctx2D.closePath();
+    }
+
+    updateDynamicObj() {
+        /* Polygon de collision en fonction du sprite */
+        this.polygons = new SAT.Polygon(new SAT.Vector(this.posX, this.posY),
+            [new SAT.Vector(this.currentSpriteW * 0.25, 0),
+            new SAT.Vector(this.currentSpriteW * 0.25, this.currentSpriteH),
+            new SAT.Vector(this.currentSpriteW * 0.75, this.currentSpriteH),
+            new SAT.Vector(this.currentSpriteW * 0.75, 0)
+            ]);
     }
 
     animeRandom() {
@@ -112,10 +137,10 @@ export class Personnage {
         const shouldMove = Math.random() > 0.85;
         if (isIdle && shouldMove) {
             const direction = Math.floor(Math.random() * 5);
-            this.setDirMove(direction);
+            this.dirMove = direction;
         }
         else {
-            this.setDirMove(0);
+            this.dirMove = 0;
         }
     }
 
@@ -149,12 +174,12 @@ export class Personnage {
                 }
                 break;
             case 1: // DROITE
-                if (this.posX < this.cnv.width - this.cnvW) this.posX += 10;
+                if (this.posX < this.cnv.width - this.cnvW && (this.isCollide == false)) this.posX += 10;
                 // Animation de marche possible au bord de la grille
                 this.imgId = this.detail.animations.find(a => a.name === 'walkFwd').start;
                 break;
             case 2: // GAUCHE
-                if (this.posX > this.cnvW) this.posX -= 10;
+                if (this.posX > this.cnvW && (this.isCollide == false)) this.posX -= 10;
                 // Animation de marche possible au bord de la grille
                 this.imgId = this.detail.animations.find(a => a.name === 'walkFwd').start;
                 break;
@@ -172,6 +197,15 @@ export class Personnage {
             default:
                 break;
         }
+    }
+
+    is_collide(target) {
+        // si mon polygon rentre en contact avec celui d'un autre joueur je retourne true
+        // sinon je retourne false
+        const response = new SAT.Response();
+        const collided = SAT.testPolygonPolygon(this.polygons, target, response);
+        console.log("collide : " + collided);
+        return collided;
     }
 
     enemyClose() {
@@ -242,8 +276,37 @@ export class Personnage {
         }
     }
 
-
+    controls(event) {
+        switch (event.key) {
+            case 'q':
+                // gaucheq
+                console.log("qq");
+                this.dirMove = 2;
+                this.move();
+                break;
+            case 'z':
+                // haut
+                console.log("z");
+                this.dirMove = 3;
+                this.move();
+                break;
+            case 'd':
+                console.log("d");
+                // droite
+                this.dirMove = 1;
+                this.move();
+                break;
+            case 's':
+                console.log("s");
+                this.dirMove = 4;
+                this.move();
+                break;
+            default:
+                break;
+        }
+    }
 }
+
 
 function getRandomArbitrary(min, max) {
     return Math.floor(Math.random() * (max - min) + min);

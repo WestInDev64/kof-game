@@ -46,8 +46,6 @@ class Game {
         this.cnv = canvas;
         this.tabPlayer = [];
         this.decor;
-        this.gridBg;
-        this.gridObj;
         this.gameOver = false;
         this.fps = 90;
         this.timer;
@@ -58,23 +56,23 @@ class Game {
 
     init() {
         const randBg = Math.floor(Math.random() * 3);
-        this.decor = new Decor(cnv,ctx,this.bgFolder[randBg], this.nbFramesBg[randBg],this.bgAnime[randBg]);
+        this.decor = new Decor(cnv, ctx, this.bgFolder[randBg], this.nbFramesBg[randBg], this.bgAnime[randBg]);
         this.decor.init();
 
 
         //console.table(this.gridObj.grid);
-        let mai = new Personnage("Mai", "Mai", "Mai Shiranui_", 'L', 1, detailanimeMai, this.gridBg, this.gridPlatfrm, cnv, ctx);
-        let king = new Personnage("King", "King", "King_", 'R', 2, detailanimeKing, this.gridBg, this.gridPlatfrm, cnv, ctx);
-        let calum = new Personnage("Sie Kensou", "Sie Kensou", "Sie Kensou_", 'R', 2, detailanimeSie, this.gridBg, this.gridPlatfrm, cnv, ctx);
-        let calum2 = new Personnage("Kyo", "Kyo", "Kyo Kusanagi_", 'L', 2, detailanimeKyo, this.gridBg, this.gridPlatfrm, cnv, ctx);
-        let calum3 = new Personnage("Kim Kaphwan", "Kim Kaphwan", "Kim Kaphwan_", 'L', 2, detailanimeKim, this.gridBg, this.gridPlatfrm, cnv, ctx);
-        let calum4 = new Personnage("Terry Bogard", "Terry Bogard", "Terry Bogard_", 'R', 2, detailanimeTerry, this.gridBg, this.gridPlatfrm, cnv, ctx);
+        let mai = new Personnage("Mai", "Mai", "Mai Shiranui_", 'L', 1, detailanimeMai, cnv, ctx);
+        let king = new Personnage("King", "King", "King_", 'R', 2, detailanimeKing, cnv, ctx);
+        //let calum = new Personnage("Sie Kensou", "Sie Kensou", "Sie Kensou_", 'R', 2, detailanimeSie, cnv, ctx);
+        //let calum2 = new Personnage("Kyo", "Kyo", "Kyo Kusanagi_", 'L', 2, detailanimeKyo, cnv, ctx);
+        //let calum3 = new Personnage("Kim Kaphwan", "Kim Kaphwan", "Kim Kaphwan_", 'L', 2, detailanimeKim, cnv, ctx);
+        //let calum4 = new Personnage("Terry Bogard", "Terry Bogard", "Terry Bogard_", 'R', 2, detailanimeTerry, cnv, ctx);
         this.tabPlayer.push(mai);
         this.tabPlayer.push(king);
-        this.tabPlayer.push(calum);
-        this.tabPlayer.push(calum2);
-        this.tabPlayer.push(calum3);
-        this.tabPlayer.push(calum4);
+        //this.tabPlayer.push(calum);
+        //this.tabPlayer.push(calum2);
+        //this.tabPlayer.push(calum3);
+        //this.tabPlayer.push(calum4);
         for (let player of this.tabPlayer) {
             player.init();
         }
@@ -85,20 +83,9 @@ class Game {
         this.decor.drawBg();                                    // Dessine Bg
         this.decor.animeBg();                                   // Anime Bg
         this.decor.drawPlf();
-        //this.gridPlatfrm.drawPlf();                             // Dessine plateforme
-        //this.gridObj.drawObj();                                 // Dessine Item
-        //console.log(this.gridObj);
-        /* for (let player of this.tabPlayer) {
-            this.gridBg.setCellGrid(player, player.codePlayer);
-        } */
-        //console.log(this.gridPlatfrm);
-        //this.gridBg.enemyClose();
+
+
         for (let player of this.tabPlayer) {
-            player.hp -= 0.5;
-            if(player.hp < 0){
-                player.hp = 100;
-            }
-            //console.log(player.hp);
             player.animeRandom();                               // Anime aléatoire
             player.move();                                      // Déplacement
             player.draw();                                      // Dessine perso
@@ -107,6 +94,20 @@ class Game {
                 this.resDefer();
             }
         }
+
+        // A chaque frame 
+        for (let player of this.tabPlayer) {
+            for (let i = 0; i < this.tabPlayer.length; i++) {
+                if (player.name !== this.tabPlayer[i].name) {
+                    player.isCollide = player.is_collide(this.tabPlayer[i].polygons);
+                }
+            }
+
+        }
+
+
+
+
     }
 
     start() {
@@ -128,32 +129,32 @@ class Game {
     onResize() {
         const baseW = 640;
         const baseH = 480;
-      
+
         const ratioW = innerWidth / baseW;
         const ratioH = innerHeight / baseH;
         const ratio = Math.min(ratioW, ratioH);
         const w = baseW * ratio;
         const h = baseH * ratio;
-      
+
         this.cnv.width = w;
         this.cnv.height = h;
-      
-        if (this.background) {
-          this.decor._onResize();
+
+        if (this.decor) {
+            this.decor._onResize();
         }
-      
-        if (this.characters) {
-          for (let character of this.characters) {
-            character._onResize();
-          }
+
+        if (this.tabPlayer) {
+            for (let player of this.tabPlayer) {
+                player._onResize();
+            }
         }
-      
+
         if (this.platforms) {
-          for (let platform of this.platforms) {
-            platform._onResize();
-          }
+            for (let platform of this.platforms) {
+                platform._onResize();
+            }
         }
-      }
+    }
 
 }
 
@@ -172,11 +173,16 @@ function clearCanvas() {
     ctx.fillRect(0, 0, cnv.width, cnv.height);
 }
 
-
+window.document.addEventListener('keydown', event => {
+    game.tabPlayer[0].controls(event);
+});
 
 const game = new Game(cnv);
 game.init();
 game.start();
 
+
 //window.document.addEventListener('resize', game.onResize());
+
+
 
