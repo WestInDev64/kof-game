@@ -8,7 +8,7 @@ export class Scene {
         this.bgLayers = [];
         this.cnvW = 128 / 2;
         this.cnvH = 120;
-        this.ctx2D = ctx;
+        this.ctx = ctx;
         this.nbBgFrames = bgFramesNb;
         this.img;
         this.imgId = 0;
@@ -19,6 +19,7 @@ export class Scene {
         this.platformH = 120 / 8;
         this.spriteWidth;
         this.spriteHeight;
+        this.platforms = [];
     }
 
     /* Chargement du Background */
@@ -36,6 +37,16 @@ export class Scene {
         this.procedural();
         this.spriteWidth = this.bgLayers[this.imgId].width;
         this.spriteHeight = this.bgLayers[this.imgId].height;
+        for (let point of this.proceduralTab) {
+            this.platforms.push(
+                new SAT.Box(
+                    new SAT.Vector(
+                        this.cnvW * point.randJ,
+                        this.cnvH * point.randI + (this.cnvH - this.cnvH / 16),
+                        this.platformW,
+                        this.platformH)).toPolygon());
+        }
+        console.log(this.proceduralTab);
     }
 
     /* Dessing Background */
@@ -45,13 +56,13 @@ export class Scene {
         const ratio = Math.max(ratioW, ratioH);
         const w = this.bgLayers[this.imgId].width * ratio;
         const h = this.bgLayers[this.imgId].height * ratio;
-        this.ctx2D.save();
+        this.ctx.save();
         /**
          * Translate la position du contexte et décale l'origine du canvas 0,0
          * @param x : décalage horizontale
          * @param y : décalage verticale
          */
-        this.ctx2D.translate(this.cnv.width / 2, this.cnv.height / 2);
+        this.ctx.translate(this.cnv.width / 2, this.cnv.height / 2);
         /**
          * Dessine l'image dans le contexte 2D
          * @param Image     : Image à dessiner
@@ -64,8 +75,8 @@ export class Scene {
          * @param sLargeur  : Image à dessiner
          * @param sHauteur  : Image à dessiner
          */
-        this.ctx2D.drawImage(this.bgLayers[this.imgId], 0, 0, this.bgLayers[this.imgId].width, this.bgLayers[this.imgId].height, -w / 2, -h / 2, w, h);
-        this.ctx2D.restore();
+        this.ctx.drawImage(this.bgLayers[this.imgId], 0, 0, this.bgLayers[this.imgId].width, this.bgLayers[this.imgId].height, -w / 2, -h / 2, w, h);
+        this.ctx.restore();
     }
 
     /* Animation du Background */
@@ -86,7 +97,7 @@ export class Scene {
             this.proceduralTab.push({ randI, randJ });
         }
     }
-    
+
 
     drawPlf() {
         /**
@@ -97,13 +108,16 @@ export class Scene {
          * 3 eme tour / 4eme tour  : s'assurer au niv 2 que les plateformes sont accessibles
          * 5 eme tour : Placer des objets ( 2eme grille objet)   
          *  */
-        const gradient = this.ctx2D.createLinearGradient(0, 0, 0, this.cnv.height / 1.2);
+        const gradient = this.ctx.createLinearGradient(0, 0, 0, this.cnv.height / 1.2);
         gradient.addColorStop(0, "white");
         gradient.addColorStop(1, "magenta");
-        this.ctx2D.fillStyle = gradient;
-        for (let i = 0; i < this.proceduralTab.length; i++) {
-            this.ctx2D.fillRect(this.platformW * this.proceduralTab[i].randJ, this.cnvH * this.proceduralTab[i].randI + (this.cnvH - this.cnvH / 16), this.platformW, this.platformH);
-            this.ctx2D.strokeRect(this.platformW * this.proceduralTab[i].randJ, this.cnvH * this.proceduralTab[i].randI + (this.cnvH - this.cnvH / 16), this.platformW, this.platformH);
+        this.ctx.fillStyle = gradient;
+        for (let platform of this.platforms) {
+            const box = platform.getAABBAsBox();
+            //console.log(this.platforms);
+            this.ctx.fillRect(box.pos.x, box.pos.y, box.w, box.h);
+            /* this.ctx.fillRect(this.platformW * this.proceduralTab[i].randJ, this.cnvH * this.proceduralTab[i].randI + (this.cnvH - this.cnvH / 16), this.platformW, this.platformH);
+            this.ctx.strokeRect(this.platformW * this.proceduralTab[i].randJ, this.cnvH * this.proceduralTab[i].randI + (this.cnvH - this.cnvH / 16), this.platformW, this.platformH); */
         }
 
     }

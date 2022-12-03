@@ -19,12 +19,12 @@ export default {
         {
             name: "JUMP_UP",
             start: 24,
-            end: 34,
+            end: 32,
         },
         {
             name: "CROUCH",
-            start: 39,
-            end: 40,
+            start: 33,
+            end: 34,
         },
         {
             name: "PUNCH",

@@ -36,8 +36,8 @@ export class Game {
         this.scene.init();
 
         const persoTab = [
-            new Personnage("Mai", "Mai", "Mai Shiranui_", 'L', 1, detailanimeMai, this.cnv, this.ctx),
-            new Personnage("King", "King", "King_", 'R', 2, detailanimeKing, this.cnv, this.ctx),
+            new Personnage("Mai", "Mai", "Mai Shiranui_", 'L', 1, detailanimeMai, this.cnv, this.ctx,this.scene),
+            new Personnage("King", "King", "King_", 'R', 2, detailanimeKing, this.cnv, this.ctx, this.scene),
         ];
         
         this.fps = new FpsCounter(this.ctx);
@@ -69,14 +69,14 @@ export class Game {
 
 
         for (let player of this.tabPlayer) {
-            player.update(fps);
-            player.move(0);                                // Déplacement
-            player.animeRandom();                               // Anime aléatoire
+            //player.move(0);                                // Déplacement
+            //this.tabPlayer[1].animeRandom();                               // Anime aléatoire
             player.draw();                                      // Dessine perso
             if (player.kO) {
                 // restart dans 1s
                 this.resDefer();
             }
+            player.update(fps);
         }
 
         // A chaque frame 

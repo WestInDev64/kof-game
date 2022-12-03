@@ -59,7 +59,23 @@ window.document.addEventListener('keydown', event => {
         case 'x':
         case 'c':
         case 'v':
-            game.tabPlayer[0].controls(event);
+            game.tabPlayer[0].controlsKeyDown(event);
+            break;
+    }
+});
+
+/* Keyboard keydown autorisés */
+window.document.addEventListener('keyup', event => {
+    switch (event.key) {
+        case "ArrowRight":
+        case "ArrowLeft":
+        //case "ArrowUp":
+        case "ArrowDown":
+        case 'w':
+        case 'x':
+        case 'c':
+        case 'v':
+            game.tabPlayer[0].controlsKeyUp(event);
             break;
     }
 });

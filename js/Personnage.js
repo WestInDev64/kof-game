@@ -1,9 +1,15 @@
 import { HealthBar, Color } from "./HealthBar.js";
-
+export const PersoState = {
+    IDLE: "IDLE",
+    WALK_FWD: "WALK_FWD",
+    WALK_BWD: "WALK_BWD",
+    JUMP_UP: "JUMP_UP",
+    CROUCH: "CROUCH"
+};
 
 // PERSONNAGE
 export class Personnage {
-    constructor(name, assetsFolder, imgNamePng, startPosition, codePlayer, json, canvas, ctx) {
+    constructor(name, assetsFolder, imgNamePng, startPosition, codePlayer, json, canvas, ctx, scene) {
         /* Rendu */
         this.cnv = canvas;
         this.ctx = ctx;
@@ -39,20 +45,34 @@ export class Personnage {
         this.cnvH = 120;
         this.position = { x: 0, y: 0 };
         this.dirInverse = false;
-        this.speed;
+        this.acceleration = 0;
+        this.velo = 0;
+        this.velocity = { x: 0, y: 0 };
+        this.startVelocity = {
+            jump: 100
+        };
+        this.gravity = 1;
+
 
         /* Déplacements - Mouvements*/
 
-        this.dirMove = 4;
+        this.direction = 4;
         this.actionNum = 0;
         this.onAction = false;
         this.onHit = false;
+
+        /* Les états */
         this.isCollide = false;
         this.isJumping = false;
+        this.isCrouching = false;
+        this.isOnFloor = true;
 
         /* Objets rattachés */
         this.hpBar;
         this.polygons;
+
+        this.pressedKeys = [];
+        this.platforms = scene.platforms;
     }
 
     loadImg() {
@@ -81,7 +101,7 @@ export class Personnage {
 
 
     idle() {
-        this.dirMove = 0;
+        this.direction = 0;
     }
 
     draw() {
@@ -141,15 +161,14 @@ export class Personnage {
     }
 
     animeRandom() {
-        const isIdle = this.imgFrame >= this.detail.animations.find(a => a.name === 'IDLE').start
-            && this.imgFrame <= this.detail.animations.find(a => a.name === 'IDLE').end;
+        const isIdle = this.imgFrame >= this.anime.IDLE.start && this.imgFrame <= this.anime.IDLE.end;
         const shouldMove = Math.random() > 0.85;
         if (isIdle && shouldMove) {
             const direction = Math.floor(Math.random() * 5);
-            this.dirMove = direction;
+            this.direction = direction;
         }
         else {
-            this.dirMove = 0;
+            this.direction = 0;
         }
     }
 
@@ -175,40 +194,112 @@ export class Personnage {
             this.timeAnimation = time.previous;
             this.imgFrame++;
         }
+
+        if (this.pressedKeys.includes("ArrowDown")) {
+            this.move(4);                                                   // S'accroupir
+
+            /* Retirer les touches du tab lorsque l'on est baissé */
+            findAndRemove(this.pressedKeys, "ArrowLeft");
+            findAndRemove(this.pressedKeys, "ArrowRight");
+            findAndRemove(this.pressedKeys, "ArrowUp");
+        }
+        /* Gestion des mouvements au clavier sans à-coups*/
+        if (this.pressedKeys.includes("ArrowRight")) this.move(1);      // Droite
+        if (this.pressedKeys.includes("ArrowLeft")) this.move(2);       // Gauche
+        if (this.pressedKeys.includes("ArrowUp")) {                     // Sauter
+            this.move(3);
+        }
+        if (this.pressedKeys.length == 0) {
+            this.move(0);                 // Idle
+        }
+
+        // Gravity
+
+        //this.applyGravity(this.gravity);
+        //this.velo += this.acceleration;
+
+
+        //this.position.y += this.velo;
+
+        /**
+         * !ICI Probleme Constrain
+         * 
+         */
+
+        /* this.polygons.pos.x = this.position.x;
+        this.polygons.pos.y = this.position.y;
+
+        this.isOnFloor = false;
+
+        for (const platform of this.platforms) {
+            const response = new SAT.Response();
+            if (SAT.testPolygonPolygon(this.polygons, platform, response)) {
+                this.position.x -= response.overlapV.x;
+                this.position.y -= response.overlapV.y;
+
+                if (response.overlapV.y > 0 && this.velocity > 0) {
+                    this.isOnFloor = true;
+                }
+            }
+        }
+
+        this.acceleration = 0; */
     }
+
+
 
 
     move(value) {
         switch (value) {
             case 0: // IDLE
+                this.currentPersoState = PersoState.IDLE;
                 for (const anime of this.detail.animations) {
                     if (this.imgFrame == anime.end + 1) {
                         this.imgFrame = this.anime.IDLE.start;
-                        this.onAction = false;
+                        //this.onAction = false;
                     }
                 }
                 break;
             case 1: // DROITE
-                if (this.position.x < this.cnv.width - this.cnvW && (this.isCollide == false)) this.position.x += 10;
+                this.currentPersoState = PersoState.WALK_FWD;
+                if (this.position.x < this.cnv.width - this.cnvW && (this.isCollide == false)) this.position.x += 2;
                 // Animation de marche possible au bord de la grille
                 if (this.anime.WALK_FWD.start > this.imgFrame || this.anime.WALK_FWD.end <= this.imgFrame)
                     this.imgFrame = this.anime.WALK_FWD.start;
                 break;
             case 2: // GAUCHE
-                if (this.position.x > this.cnvW && (this.isCollide == false)) this.position.x -= 10;
+                this.currentPersoState = PersoState.WALK_FWD;
+                if (this.position.x > this.cnvW && (this.isCollide == false)) this.position.x -= 2;
                 // Animation de marche possible au bord de la grille
                 if (this.anime.WALK_FWD.start > this.imgFrame || this.anime.WALK_FWD.end <= this.imgFrame)
                     this.imgFrame = this.anime.WALK_FWD.start;
                 break;
             case 3: // HAUT
-                if (this.position.y >= this.cnvH && this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end <= this.imgFrame) {
-                    this.imgFrame = this.anime.JUMP_UP.start;
+                //this.velocity.y = this.startVelocity.jump;
+                this.currentPersoState = PersoState.JUMP_UP;
+                if (!this.isJumping && this.position.y >= this.cnvH) {
                     this.position.y -= this.cnvH;
                 }
+
+                if (this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end <= this.imgFrame) {
+                    this.imgFrame = this.anime.JUMP_UP.start;
+                    //this.velocity.y = this.startVelocity.jump;
+                    //this.applyGravity(this.startVelocity.jump);
+                }
+                if (this.imgFrame == this.anime.JUMP_UP.end) {
+                    this.isJumping = false;
+                }
+                if (this.isJumping) {
+                    const index = this.pressedKeys.indexOf("ArrowUp");
+                    if (index >= 0) this.pressedKeys.splice(index, 1);
+                }
+                this.isJumping = true;
                 break;
-            case 4: // BAS
-                // Animation de s'accroupir possible au sol
-                this.imgFrame = this.anime.CROUCH.start;
+            case 4: // S'ACCROUPIR
+                this.currentPersoState = PersoState.CROUCH;
+                if (this.anime.CROUCH.start > this.imgFrame || this.anime.CROUCH.end <= this.imgFrame) {
+                    this.imgFrame = this.anime.CROUCH.start;
+                }
                 break;
             default:
                 break;
@@ -220,7 +311,12 @@ export class Personnage {
         // sinon je retourne false
         const response = new SAT.Response();
         const collided = SAT.testPolygonPolygon(this.polygons, target, response);
+
         return collided;
+    }
+
+    applyGravity(force) {
+        this.acceleration += force;
     }
 
     enemyClose() {
@@ -291,69 +387,27 @@ export class Personnage {
         }
     }
 
-    controls(event) {
-        switch (event.key) {
+    controlsKeyDown(event) {
+        if (!this.pressedKeys.includes(event.key))
+            this.pressedKeys.push(event.key);
+    }
 
-            // Droite
-            case "ArrowRight":
-                this.dirMove = 1;
-                this.move(this.dirMove);
-                break;
 
-            // Gauche
-            case "ArrowLeft":
-                this.dirMove = 2;
-                this.move(this.dirMove);
-                break;
-
-            // Sauter
-            case "ArrowUp":
-                this.dirMove = 3;
-                this.move(this.dirMove);
-                break;
-
-            // Se Baisser
-            case "ArrowDown":
-                console.log("s");
-                this.dirMove = 4;
-                this.move(this.dirMove);
-                break;
-
-            // Coup de poing
-            case 'w':
-                this.actionNum = 0;
-                this.action(this.actionNum);
-                break;
-
-            // Coup de pied
-            case 'x':
-                this.actionNum = 0;
-                this.action(this.actionNum);
-                break;
-
-            // Dommage
-            case 'c':
-                this.actionNum = 1;
-                this.action(this.actionNum);
-                break;
-
-            // K.O
-            case 'v':
-                this.actionNum = 2;
-                this.action(this.actionNum);
-                break;
-
-            // Idle
-            default:
-                console.log("idle")
-                this.dirMove = 0
-                this.move(this.dirMove);
-                break;
-        }
+    controlsKeyUp(event) {
+        const index = this.pressedKeys.indexOf(event.key);
+        if (index >= 0) this.pressedKeys.splice(index, 1);
     }
 }
 
 
 function getRandomArbitrary(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
+}
+
+function findAndRemove(array, el) {
+    const index = array.indexOf(el)
+    if (index !== -1) {
+        array.splice(index, 1)
+    }
+    return array
 }
