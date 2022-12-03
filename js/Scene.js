@@ -1,5 +1,5 @@
 // CLASSE PRINCIPALE
-export class Decor {
+export class Scene {
     constructor(canvas, ctx, bgFolder, bgFramesNb, detailAnime) {
         this.cnv = canvas;
         this.cnvW = 128 / 2;
@@ -13,7 +13,7 @@ export class Decor {
         this.img;
         this.imgId = 0;
         this.animeDetail = detailAnime;
-        this.animeDetail = detailAnime;
+        this.timeAnimation = 0;
         this.proceduralTab = [];
         this.platformW = 128 / 2;
         this.platformH = 120 / 8;
@@ -69,10 +69,13 @@ export class Decor {
     }
 
     /* Animation du Background */
-    animeBg() {
-        this.imgId++;
-        if (this.imgId > this.animeDetail.animations[0].end)
-            this.imgId = this.animeDetail.animations[0].start;
+    animeBg(time) {
+        if (time.previous > this.timeAnimation + 99) {
+            this.timeAnimation = time.previous;
+            this.imgId++;
+            if (this.imgId > this.animeDetail.animations[0].end)
+                this.imgId = this.animeDetail.animations[0].start;
+        }
     }
 
     /* Procedural Platform */
@@ -83,8 +86,7 @@ export class Decor {
             this.proceduralTab.push({ randI, randJ });
         }
     }
-
-
+    
 
     drawPlf() {
         /**
@@ -109,8 +111,8 @@ export class Decor {
     updatePosition() {
         this.position.x = this.gridPosition.x * this.tileWidth;
         this.position.y = this.gridPosition.y * this.tileHeight;
-      }
-    
+    }
+
 
 
     _onResize() {
@@ -118,5 +120,5 @@ export class Decor {
         this.bgLayers[0].height = this.cnv.height / 9;
 
         this.updatePosition();
-      }
+    }
 }

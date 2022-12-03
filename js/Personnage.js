@@ -1,11 +1,12 @@
 import { HealthBar, Color } from "./HealthBar.js";
 
+
 // PERSONNAGE
 export class Personnage {
     constructor(name, assetsFolder, imgNamePng, startPosition, codePlayer, json, canvas, ctx) {
         /* Rendu */
         this.cnv = canvas;
-        this.ctx2D = ctx;
+        this.ctx = ctx;
 
         /* Details perso */
         this.name = name;
@@ -19,21 +20,29 @@ export class Personnage {
         this.imgNamePng = imgNamePng;
         this.assetsFolder = assetsFolder;
         this.assets = [];
-        this.imgId = 0;
+        this.imgFrame = 0;
         this.detail = json;
         this.currentSpriteH;
         this.currentSpriteW;
         this.img;
+        this.timeAnimation = 0;
+        this.anime = {
+            IDLE: this.detail.animations.find(a => a.name === 'IDLE'),
+            WALK_FWD: this.detail.animations.find(a => a.name === 'WALK_FWD'),
+            WALK_BWD: this.detail.animations.find(a => a.name === 'WALK_BWD'),
+            JUMP_UP: this.detail.animations.find(a => a.name === 'JUMP_UP'),
+            CROUCH: this.detail.animations.find(a => a.name === 'CROUCH')
+        };
 
         /* Position taille  */
         this.cnvW = 128 / 2;
         this.cnvH = 120;
-        this.posX = 0;
-        this.posY = 0;
+        this.position = { x: 0, y: 0 };
         this.dirInverse = false;
+        this.speed;
 
         /* Déplacements - Mouvements*/
-        this.canMove = true;
+
         this.dirMove = 4;
         this.actionNum = 0;
         this.onAction = false;
@@ -50,7 +59,6 @@ export class Personnage {
         for (let i = 0; i < this.detail.nbFrames; i++) {
             this.img = new Image();
             this.img.src = `assets/img/persos/${this.assetsFolder}/${this.imgNamePng}${i}.png`;
-            //this.img.sizes.
             this.assets.push(this.img);
         }
     }
@@ -58,17 +66,17 @@ export class Personnage {
     init() {
         this.loadImg();
         if (this.startPosition == 'L') {
-            this.posX = 2 * this.cnvW;
-            this.posY = 3 * this.cnvH;
+            this.position.x = 2 * this.cnvW;
+            this.position.y = 3 * this.cnvH;
             this.dirInverse = true;
         }
         else {
             let col = getRandomArbitrary(5, 10)
             let lin = getRandomArbitrary(0, 4)
-            this.posX = col * this.cnvW;
-            this.posY = lin * this.cnvH;
+            this.position.x = col * this.cnvW;
+            this.position.y = lin * this.cnvH;
         }
-        this.hpBar = new HealthBar(this, this.cnv, this.ctx2D, this.posX, this.posY, this.hp, this.hpMax, this.cnvW, this.cnvH);
+        this.hpBar = new HealthBar(this, this.cnv, this.ctx, this.position.x, this.position.y, this.hp, this.hpMax, this.cnvW, this.cnvH);
     }
 
 
@@ -86,44 +94,45 @@ export class Personnage {
          * Restore le contexte à sa forme initiale
          */
         //this.healthBar();
-        this.ctx2D.save();
+        this.ctx.save();
         // Tailles dynamiques en fonction du sprite
-        this.currentSpriteW = this.assets[this.imgId].width;
-        this.currentSpriteH = this.assets[this.imgId].height;
+        this.currentSpriteW = this.assets[this.imgFrame].width;
+        this.currentSpriteH = this.assets[this.imgFrame].height;
         /**
          * Je translate en X -> largeur de grille / 2 -  (32px) - largeur sprite (30px ) 
          */
-        this.ctx2D.translate((this.posX + this.cnvW / 2) - this.currentSpriteW / 2, (this.posY + this.cnvH) - this.currentSpriteH);
+        this.ctx.translate((this.position.x + this.cnvW / 2) - this.currentSpriteW / 2, (this.position.y + this.cnvH) - this.currentSpriteH);
         if (this.dirInverse) {
-            this.ctx2D.translate(this.currentSpriteW, 0);
-            this.ctx2D.scale(-1, 1);
+            this.ctx.translate(this.currentSpriteW, 0);
+            this.ctx.scale(-1, 1);
         }
-        this.ctx2D.drawImage(this.assets[this.imgId], 0, 0);
-        this.ctx2D.fillStyle = "#00FFFF75";
-        this.ctx2D.fillRect(0, 0, this.currentSpriteW, this.currentSpriteH);
+        this.ctx.drawImage(this.assets[this.imgFrame], 0, 0);
+        this.ctx.fillStyle = "#00FFFF75";
+        this.ctx.fillRect(0, 0, this.currentSpriteW, this.currentSpriteH);
 
         this.updateDynamicObj();                                                // Met à jour les polygons
-        this.drawPolygon(this.polygons);                                   // Dessine les polygons dans le context du perso
+        this.drawPolygon(this.polygons);                                        // Dessine les polygons dans le context du perso
 
-        this.ctx2D.restore();                                                   // Restore le contexte
+        this.ctx.restore();                                                     // Restore le contexte
+
         this.hpBar.rodolpheBar();
     }
 
     drawPolygon(polygon) {
-        this.ctx2D.beginPath();
-        this.ctx2D.moveTo(polygon.points[0].x, polygon.points[0].y);
+        this.ctx.beginPath();
+        this.ctx.moveTo(polygon.points[0].x, polygon.points[0].y);
         for (let i = 0; i < polygon.points.length; i++) {
-            this.ctx2D.lineTo(polygon.points[i].x, polygon.points[i].y);
+            this.ctx.lineTo(polygon.points[i].x, polygon.points[i].y);
         }
-        this.ctx2D.lineTo(polygon.points[0].x, polygon.points[0].y);
-        this.ctx2D.strokeStyle = "#FF0000";
-        this.ctx2D.stroke();
-        this.ctx2D.closePath();
+        this.ctx.lineTo(polygon.points[0].x, polygon.points[0].y);
+        this.ctx.strokeStyle = "#FF0000";
+        this.ctx.stroke();
+        this.ctx.closePath();
     }
 
     updateDynamicObj() {
         /* Polygon de collision en fonction du sprite */
-        this.polygons = new SAT.Polygon(new SAT.Vector(this.posX, this.posY),
+        this.polygons = new SAT.Polygon(new SAT.Vector(this.position.x, this.position.y),
             [new SAT.Vector(this.currentSpriteW * 0.25, 0),
             new SAT.Vector(this.currentSpriteW * 0.25, this.currentSpriteH),
             new SAT.Vector(this.currentSpriteW * 0.75, this.currentSpriteH),
@@ -132,9 +141,8 @@ export class Personnage {
     }
 
     animeRandom() {
-        //const shouldMove = Math.random() > 0.85;
-        const isIdle = this.imgId >= this.detail.animations.find(a => a.name === 'idle').start
-            && this.imgId <= this.detail.animations.find(a => a.name === 'idle').end;
+        const isIdle = this.imgFrame >= this.detail.animations.find(a => a.name === 'IDLE').start
+            && this.imgFrame <= this.detail.animations.find(a => a.name === 'IDLE').end;
         const shouldMove = Math.random() > 0.85;
         if (isIdle && shouldMove) {
             const direction = Math.floor(Math.random() * 5);
@@ -149,16 +157,23 @@ export class Personnage {
     action(value) {
         switch (value) {
             case 0:
-                this.imgId = this.detail.animations.find(a => a.name === 'kick').start;
+                this.imgFrame = this.detail.animations.find(a => a.name === 'kick').start;
                 break;
             case 1:
-                this.imgId = this.detail.animations.find(a => a.name === 'dammaged').start;
+                this.imgFrame = this.detail.animations.find(a => a.name === 'dammaged').start;
                 break;
             case 2:
-                this.imgId = this.detail.animations.find(a => a.name === 'ko').start;
+                this.imgFrame = this.detail.animations.find(a => a.name === 'ko').start;
                 break;
             default:
                 break;
+        }
+    }
+
+    update(time) {
+        if (time.previous > this.timeAnimation + 99) {
+            this.timeAnimation = time.previous;
+            this.imgFrame++;
         }
     }
 
@@ -166,46 +181,34 @@ export class Personnage {
     move(value) {
         switch (value) {
             case 0: // IDLE
-                this.imgId++;
                 for (const anime of this.detail.animations) {
-                    if (this.imgId == anime.end + 1) {
-                        console.log(anime.name);
-                        this.imgId = this.detail.animations.find(a => a.name === 'idle').start;
+                    if (this.imgFrame == anime.end + 1) {
+                        this.imgFrame = this.anime.IDLE.start;
                         this.onAction = false;
                     }
                 }
                 break;
             case 1: // DROITE
-                if (this.posX < this.cnv.width - this.cnvW && (this.isCollide == false)) this.posX += 10;
+                if (this.position.x < this.cnv.width - this.cnvW && (this.isCollide == false)) this.position.x += 10;
                 // Animation de marche possible au bord de la grille
-                const animD = this.detail.animations.find(a => a.name === 'walkFwd');
-                if (animD.start > this.imgId || animD.end <= this.imgId)
-                    this.imgId = animD.start;
+                if (this.anime.WALK_FWD.start > this.imgFrame || this.anime.WALK_FWD.end <= this.imgFrame)
+                    this.imgFrame = this.anime.WALK_FWD.start;
                 break;
             case 2: // GAUCHE
-                if (this.posX > this.cnvW && (this.isCollide == false)) this.posX -= 10;
+                if (this.position.x > this.cnvW && (this.isCollide == false)) this.position.x -= 10;
                 // Animation de marche possible au bord de la grille
-                const animG = this.detail.animations.find(a => a.name === 'walkFwd');
-                if (animG.start > this.imgId || animG.end <= this.imgId)
-                    this.imgId = animG.start;
-                //this.imgId = this.detail.animations.find(a => a.name === 'walkFwd').start;
+                if (this.anime.WALK_FWD.start > this.imgFrame || this.anime.WALK_FWD.end <= this.imgFrame)
+                    this.imgFrame = this.anime.WALK_FWD.start;
                 break;
             case 3: // HAUT
-                if (!this.isJumping && this.posY >= this.cnvH) {
-                    this.isJumping = true;
-                    this.posY -= this.cnvH;
-                    this.imgId = this.detail.animations.find(a => a.name === 'jump').start
-                }
-                const animU = this.detail.animations.find(a => a.name === 'jump');
-                if (animU.start > this.imgId || animU.end <= this.imgId) {
-                    this.imgId = animU.start;
-                    this.isJumping = false;
+                if (this.position.y >= this.cnvH && this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end <= this.imgFrame) {
+                    this.imgFrame = this.anime.JUMP_UP.start;
+                    this.position.y -= this.cnvH;
                 }
                 break;
             case 4: // BAS
-                if (this.posY < this.cnv.height - this.cnvH) this.posY += this.cnvH;
                 // Animation de s'accroupir possible au sol
-                this.imgId = this.detail.animations.find(a => a.name === 'crouch').start
+                this.imgFrame = this.anime.CROUCH.start;
                 break;
             default:
                 break;
@@ -217,8 +220,6 @@ export class Personnage {
         // sinon je retourne false
         const response = new SAT.Response();
         const collided = SAT.testPolygonPolygon(this.polygons, target, response);
-        //if (collided) console.log(response);
-        //console.log("collide : " + collided);
         return collided;
     }
 
@@ -231,19 +232,19 @@ export class Personnage {
             // si je suis en col 0 je regarde qu'à droite 
             // si je suis en col (nbCol - 1) je regarde qu'à gauche 
             // sion je regarde a gauche et a droite
-            if (player.posX >= 0
-                && player.posX <= (this.nbCol - 2) * player.cnvW
-                && this.bgGrid.coord_to_cell(player.posX + player.cnvW, player.posY).state > 0
-                && this.bgGrid.coord_to_cell(player.posX + player.cnvW, player.posY).state !== player.codePlayer) {
-                rightPlayer = this.bgGrid.coord_to_cell(player.posX + player.cnvW, player.posY).player;
+            if (player.position.x >= 0
+                && player.position.x <= (this.nbCol - 2) * player.cnvW
+                && this.bgGrid.coord_to_cell(player.position.x + player.cnvW, player.position.y).state > 0
+                && this.bgGrid.coord_to_cell(player.position.x + player.cnvW, player.position.y).state !== player.codePlayer) {
+                rightPlayer = this.bgGrid.coord_to_cell(player.position.x + player.cnvW, player.position.y).player;
                 enemyOnTheRight = rightPlayer != undefined;
                 //console.log(rightPlayer);
             }
-            else if (player.posX <= player.cnvW * (this.nbCol - 1)
-                && player.posX >= player.cnvW
-                && this.bgGrid.coord_to_cell(player.posX - player.cnvW, player.posY).state > 0
-                && this.bgGrid.coord_to_cell(player.posX - player.cnvW, player.posY).state !== player.codePlayer) {
-                leftPlayer = this.bgGrid.coord_to_cell(player.posX - player.cnvW, player.posY).player;
+            else if (player.position.x <= player.cnvW * (this.nbCol - 1)
+                && player.position.x >= player.cnvW
+                && this.bgGrid.coord_to_cell(player.position.x - player.cnvW, player.position.y).state > 0
+                && this.bgGrid.coord_to_cell(player.position.x - player.cnvW, player.position.y).state !== player.codePlayer) {
+                leftPlayer = this.bgGrid.coord_to_cell(player.position.x - player.cnvW, player.position.y).player;
                 enemyOnTheLeft = leftPlayer != undefined;
                 //console.log(leftPlayer);
             }

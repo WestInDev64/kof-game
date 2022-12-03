@@ -40,7 +40,7 @@ export class HealthBar {
             return (v - srcMin) * (dstMax - dstMin) / (srcMax - srcMin) + dstMin;
         };
         this.ctx.save();
-        this.ctx.translate(this.perso.posX, this.perso.posY);
+        this.ctx.translate(this.perso.position.x, this.perso.position.y);
         if (this.perso.dirInverse) {
             this.ctx.translate(this.w,0);
             this.ctx.scale(-1, 1);
@@ -83,8 +83,6 @@ export class HealthBar {
             this.ctx.lineTo(barSize - x, y);
             this.ctx.lineTo(barSize - x, 0);
         } else if (x < barSize - 5) {
-            //console.clear();
-            //console.log(x)
             this.ctx.lineTo(barSize - 5, 10);
             this.ctx.lineTo(barSize - x, 10);
             this.ctx.lineTo(barSize - x, 0);

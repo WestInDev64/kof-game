@@ -6,6 +6,8 @@
 
 canvas {
     border: 1px solid black;
+    width: 100%;
+    object-fit: contain;
     image-rendering: crisp-edges;
     image-rendering: pixelated;
 }
