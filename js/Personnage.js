@@ -4,7 +4,19 @@ export const PersoState = {
     WALK_FWD: "WALK_FWD",
     WALK_BWD: "WALK_BWD",
     JUMP_UP: "JUMP_UP",
-    CROUCH: "CROUCH"
+    JUMP_FWD: "JUMP_FWD",
+    JUMP_BWD: "JUMP_BWD",
+    CROUCH: "CROUCH",
+    PUNCH: "PUNCH",
+    KICK: "KICK",
+    DAMMAGE: "DAMMAGE",
+    KO: "KO",
+};
+
+
+export const startPos = {
+    LEFT: 'L',
+    RIGHT: 'R'
 };
 
 // PERSONNAGE
@@ -37,7 +49,11 @@ export class Personnage {
             WALK_FWD: this.detail.animations.find(a => a.name === 'WALK_FWD'),
             WALK_BWD: this.detail.animations.find(a => a.name === 'WALK_BWD'),
             JUMP_UP: this.detail.animations.find(a => a.name === 'JUMP_UP'),
-            CROUCH: this.detail.animations.find(a => a.name === 'CROUCH')
+            CROUCH: this.detail.animations.find(a => a.name === 'CROUCH'),
+            PUNCH: this.detail.animations.find(a => a.name === 'PUNCH'),
+            KICK: this.detail.animations.find(a => a.name === 'KICK'),
+            DAMMAGE: this.detail.animations.find(a => a.name === 'DAMMAGE'),
+            KO: this.detail.animations.find(a => a.name === 'KO'),
         };
 
         /* Position taille  */
@@ -46,12 +62,9 @@ export class Personnage {
         this.position = { x: 0, y: 0 };
         this.dirInverse = false;
         this.acceleration = 0;
-        this.velo = 0;
         this.velocity = { x: 0, y: 0 };
-        this.startVelocity = {
-            jump: 100
-        };
-        this.gravity = 1;
+        this.speed = 0;
+        this.gravity = 10;
 
 
         /* Déplacements - Mouvements*/
@@ -60,9 +73,11 @@ export class Personnage {
         this.actionNum = 0;
         this.onAction = false;
         this.onHit = false;
+        this.collidingWithOpponent = false;
+
 
         /* Les états */
-        this.isCollide = false;
+        this.isColliding = false;
         this.isJumping = false;
         this.isCrouching = false;
         this.isOnFloor = true;
@@ -73,6 +88,8 @@ export class Personnage {
 
         this.pressedKeys = [];
         this.platforms = scene.platforms;
+        this.opponents = [];
+
     }
 
     loadImg() {
@@ -85,7 +102,7 @@ export class Personnage {
 
     init() {
         this.loadImg();
-        if (this.startPosition == 'L') {
+        if (this.startPosition == startPos.LEFT) {
             this.position.x = 2 * this.cnvW;
             this.position.y = 3 * this.cnvH;
             this.dirInverse = true;
@@ -113,15 +130,12 @@ export class Personnage {
          * Dessine l'image à la position 0 -> car ctx précédemment déplacé
          * Restore le contexte à sa forme initiale
          */
-        //this.healthBar();
         this.ctx.save();
         // Tailles dynamiques en fonction du sprite
         this.currentSpriteW = this.assets[this.imgFrame].width;
         this.currentSpriteH = this.assets[this.imgFrame].height;
-        /**
-         * Je translate en X -> largeur de grille / 2 -  (32px) - largeur sprite (30px ) 
-         */
         this.ctx.translate((this.position.x + this.cnvW / 2) - this.currentSpriteW / 2, (this.position.y + this.cnvH) - this.currentSpriteH);
+
         if (this.dirInverse) {
             this.ctx.translate(this.currentSpriteW, 0);
             this.ctx.scale(-1, 1);
@@ -129,16 +143,16 @@ export class Personnage {
         this.ctx.drawImage(this.assets[this.imgFrame], 0, 0);
         this.ctx.fillStyle = "#00FFFF75";
         this.ctx.fillRect(0, 0, this.currentSpriteW, this.currentSpriteH);
-
-        this.updateDynamicObj();                                                // Met à jour les polygons
-        this.drawPolygon(this.polygons);                                        // Dessine les polygons dans le context du perso
-
         this.ctx.restore();                                                     // Restore le contexte
 
+        this.updateDynamicObj();                                                // Met à jour les polygons
         this.hpBar.rodolpheBar();
+        this.drawPolygon(this.polygons);                                        // Dessine les polygons dans le context du perso
     }
 
     drawPolygon(polygon) {
+        this.ctx.save();
+        this.ctx.translate(polygon.pos.x, polygon.pos.y);
         this.ctx.beginPath();
         this.ctx.moveTo(polygon.points[0].x, polygon.points[0].y);
         for (let i = 0; i < polygon.points.length; i++) {
@@ -148,16 +162,21 @@ export class Personnage {
         this.ctx.strokeStyle = "#FF0000";
         this.ctx.stroke();
         this.ctx.closePath();
+        this.ctx.restore();
     }
 
     updateDynamicObj() {
         /* Polygon de collision en fonction du sprite */
-        this.polygons = new SAT.Polygon(new SAT.Vector(this.position.x, this.position.y),
-            [new SAT.Vector(this.currentSpriteW * 0.25, 0),
-            new SAT.Vector(this.currentSpriteW * 0.25, this.currentSpriteH),
-            new SAT.Vector(this.currentSpriteW * 0.75, this.currentSpriteH),
-            new SAT.Vector(this.currentSpriteW * 0.75, 0)
+        // Je me place sur la gauche de mon sprite 
+
+        // creation de plusieurs polygons pour differentes hit box
+        this.polygons = new SAT.Polygon(new SAT.Vector(this.position.x + this.cnvW / 2 - this.currentSpriteW / 2 + this.currentSpriteW * 0.25, (this.position.y + this.cnvH) - this.currentSpriteH),
+            [new SAT.Vector(),
+            new SAT.Vector(0, this.currentSpriteH),
+            new SAT.Vector(this.currentSpriteW * 0.5, this.currentSpriteH),
+            new SAT.Vector(this.currentSpriteW * 0.5, 0)
             ]);
+
     }
 
     animeRandom() {
@@ -173,21 +192,7 @@ export class Personnage {
     }
 
 
-    action(value) {
-        switch (value) {
-            case 0:
-                this.imgFrame = this.detail.animations.find(a => a.name === 'kick').start;
-                break;
-            case 1:
-                this.imgFrame = this.detail.animations.find(a => a.name === 'dammaged').start;
-                break;
-            case 2:
-                this.imgFrame = this.detail.animations.find(a => a.name === 'ko').start;
-                break;
-            default:
-                break;
-        }
-    }
+
 
     update(time) {
         if (time.previous > this.timeAnimation + 99) {
@@ -195,38 +200,53 @@ export class Personnage {
             this.imgFrame++;
         }
 
+        if (this.pressedKeys.length == 0) this.move(0);                 // Idle
+        /* Gestion des mouvements au clavier sans à-coups*/
         if (this.pressedKeys.includes("ArrowDown")) {
-            this.move(4);                                                   // S'accroupir
-
+            this.move(4);                                               // S'accroupir
             /* Retirer les touches du tab lorsque l'on est baissé */
             findAndRemove(this.pressedKeys, "ArrowLeft");
             findAndRemove(this.pressedKeys, "ArrowRight");
             findAndRemove(this.pressedKeys, "ArrowUp");
         }
-        /* Gestion des mouvements au clavier sans à-coups*/
-        if (this.pressedKeys.includes("ArrowRight")) this.move(1);      // Droite
-        if (this.pressedKeys.includes("ArrowLeft")) this.move(2);       // Gauche
-        if (this.pressedKeys.includes("ArrowUp")) {                     // Sauter
+        if (this.pressedKeys.length == 1 && this.pressedKeys.includes("ArrowRight")) this.move(1);      // Droite
+        if (this.pressedKeys.length == 1 && this.pressedKeys.includes("ArrowLeft")) this.move(2);       // Gauche
+        if (this.pressedKeys.length == 1 && this.pressedKeys.includes("ArrowUp")) {                     // Sauter
             this.move(3);
         }
-        if (this.pressedKeys.length == 0) {
-            this.move(0);                 // Idle
+        if (this.pressedKeys.length == 2
+            && this.pressedKeys.includes("ArrowRight")
+            && this.pressedKeys.includes("ArrowUp")) {
+            this.move(5);                                                                               // Saut + Droite
         }
+        if (this.pressedKeys.length == 2
+            && this.pressedKeys.includes("ArrowLeft")
+            && this.pressedKeys.includes("ArrowUp")) {
+            this.move(6);                                                                               // Saut + Droite
+        }
+
+
+        /* Actions touches WXCV */
+        if (this.pressedKeys.includes("w")) this.action(0, time);             // Punch
+        if (this.pressedKeys.includes("x")) this.action(1, time);             // Kick
+        if (this.pressedKeys.includes("d")) this.action(2, time);             // Dammage
+        if (this.pressedKeys.includes("k")) this.action(3, time);             // KO
+
 
         // Gravity
 
-        //this.applyGravity(this.gravity);
-        //this.velo += this.acceleration;
+        this.applyGravity(this.gravity);
+        this.speed += this.acceleration;
 
+        //if( this.speed >= 30) this.speed = 30;
 
-        //this.position.y += this.velo;
+        this.position.y += this.speed * time.secondsPassed;
 
-        /**
-         * !ICI Probleme Constrain
-         * 
-         */
+        if (this.position.y > this.cnv.height - this.cnvH) {
+            this.position.y = this.cnv.height - this.cnvH;
+        }
 
-        /* this.polygons.pos.x = this.position.x;
+        this.polygons.pos.x = this.position.x;
         this.polygons.pos.y = this.position.y;
 
         this.isOnFloor = false;
@@ -235,18 +255,22 @@ export class Personnage {
             const response = new SAT.Response();
             if (SAT.testPolygonPolygon(this.polygons, platform, response)) {
                 this.position.x -= response.overlapV.x;
-                this.position.y -= response.overlapV.y;
-
-                if (response.overlapV.y > 0 && this.velocity > 0) {
+                //console.log(response);
+                if (response.overlapV.y > 0 && this.speed > 0) {
                     this.isOnFloor = true;
+                    this.position.y -= response.overlapV.y;
                 }
             }
         }
+        this.acceleration = 0;
 
-        this.acceleration = 0; */
+        /* Gestion direction des persos quand ils changent de position */
+        this.direction = this.getDirection(this.startPosition);
+        if (this.direction == 1 && this.startPosition == startPos.LEFT) this.dirInverse = true; //   persoL | oponentD 
+        if (this.direction == -1 && this.startPosition == startPos.LEFT) this.dirInverse = false; // OponentD | persoL
+        if (this.direction == 1 && this.startPosition == startPos.RIGHT) this.dirInverse = true;// OponentL | PersoR 
+        if (this.direction == -1 && this.startPosition == startPos.RIGHT) this.dirInverse = false;//  PersoR  | OponentL
     }
-
-
 
 
     move(value) {
@@ -254,7 +278,7 @@ export class Personnage {
             case 0: // IDLE
                 this.currentPersoState = PersoState.IDLE;
                 for (const anime of this.detail.animations) {
-                    if (this.imgFrame == anime.end + 1) {
+                    if (this.imgFrame == anime.end) {
                         this.imgFrame = this.anime.IDLE.start;
                         //this.onAction = false;
                     }
@@ -262,38 +286,91 @@ export class Personnage {
                 break;
             case 1: // DROITE
                 this.currentPersoState = PersoState.WALK_FWD;
-                if (this.position.x < this.cnv.width - this.cnvW && (this.isCollide == false)) this.position.x += 2;
+                // Contrainte sans collision
+                if (this.position.x < this.cnv.width - this.cnvW && (!this.isCollide())) this.position.x += 2;
+
+                // Contrainte avec collision ennemy
+                if (this.opponents[0].position.x < this.cnv.width - this.opponents[0].cnvW
+                    && this.isCollide()
+                    && [PersoState.IDLE, PersoState.CROUCH, PersoState.JUMP_UP, PersoState.JUMP_FWD, PersoState.JUMP_BWD].includes(this.opponents[0].currentPersoState)) {
+                    this.direction = this.getDirection(this.startPosition);
+                    switch (this.startPosition) {
+                        case PersoState.LEFT:
+                            if (this.direction == 1) {
+                                this.position.x += 2;
+                                this.opponents[0].position.x += 2;
+                            } else {
+                                this.position.x += 2;
+                            }
+                            break;
+                        case PersoState.RIGHT:
+                            if (this.direction == 1) {
+                                this.position.x += 2;
+                            } else {
+                                this.position.x += 2;
+                                this.opponents[0].position.x += 2;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
                 // Animation de marche possible au bord de la grille
                 if (this.anime.WALK_FWD.start > this.imgFrame || this.anime.WALK_FWD.end <= this.imgFrame)
                     this.imgFrame = this.anime.WALK_FWD.start;
                 break;
             case 2: // GAUCHE
                 this.currentPersoState = PersoState.WALK_FWD;
-                if (this.position.x > this.cnvW && (this.isCollide == false)) this.position.x -= 2;
+                if (this.position.x > 0 && (!this.isCollide())) this.position.x -= 2;
+
+                if (this.opponents[0].position.x > 0
+                    && this.isCollide()
+                    && [PersoState.IDLE, PersoState.CROUCH, PersoState.JUMP_UP, PersoState.JUMP_FWD, PersoState.JUMP_BWD].includes(this.opponents[0].currentPersoState)) {
+                    this.direction = this.getDirection(this.startPosition);
+                    switch (this.startPosition) {
+                        case PersoState.LEFT:
+                            if (this.direction == 1) {
+                                this.position.x -= 2;
+                            } else {
+                                this.opponents[0].position.x -= 2;
+                                this.position.x -= 2;
+                            }
+                            break;
+                        case PersoState.RIGHT:
+                            if (this.direction == 1) {
+                                this.position.x -= 2;
+                                this.opponents[0].position.x -= 2;
+                            } else {
+                                this.position.x -= 2;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+
+                }
+
+
                 // Animation de marche possible au bord de la grille
                 if (this.anime.WALK_FWD.start > this.imgFrame || this.anime.WALK_FWD.end <= this.imgFrame)
                     this.imgFrame = this.anime.WALK_FWD.start;
+
+                // calculer la direction pour débloquer le mouvement
                 break;
             case 3: // HAUT
                 //this.velocity.y = this.startVelocity.jump;
                 this.currentPersoState = PersoState.JUMP_UP;
-                if (!this.isJumping && this.position.y >= this.cnvH) {
-                    this.position.y -= this.cnvH;
+                if (this.isOnFloor && this.position.y >= this.cnvH) {
+                    this.speed = - this.cnv.height;
+                    //this.position.y -= this.cnvH;
                 }
-
+                /* Animation de saut */
                 if (this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end <= this.imgFrame) {
                     this.imgFrame = this.anime.JUMP_UP.start;
-                    //this.velocity.y = this.startVelocity.jump;
-                    //this.applyGravity(this.startVelocity.jump);
                 }
-                if (this.imgFrame == this.anime.JUMP_UP.end) {
-                    this.isJumping = false;
-                }
-                if (this.isJumping) {
-                    const index = this.pressedKeys.indexOf("ArrowUp");
-                    if (index >= 0) this.pressedKeys.splice(index, 1);
-                }
-                this.isJumping = true;
+
+
+
                 break;
             case 4: // S'ACCROUPIR
                 this.currentPersoState = PersoState.CROUCH;
@@ -301,17 +378,81 @@ export class Personnage {
                     this.imgFrame = this.anime.CROUCH.start;
                 }
                 break;
+            case 5: // SAUT + DROITE 
+                this.currentPersoState = PersoState.JUMP_FWD;
+                if (this.isOnFloor && this.position.y >= this.cnvH) {
+                    this.speed = - this.cnv.height;
+                }
+                if (this.position.x < this.cnv.width - this.cnvW)
+                    this.position.x += 2;
+                if (this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end <= this.imgFrame) {
+                    this.imgFrame = this.anime.JUMP_UP.start;
+                }
+
+                // si le perso est collide avec l'adv en y -> comparer la pos.x du joueur et celui de l'adv pour décalage
+                // en x en positif ou negatif
+
+                break;
+            case 6: // SAUT + GAUCHE 
+                this.currentPersoState = PersoState.JUMP_BWD;
+                if (this.isOnFloor && this.position.y >= this.cnvH) {
+                    this.speed = - this.cnv.height;
+                }
+                if (this.position.x > 0) this.position.x -= 2;
+                if (this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end <= this.imgFrame) {
+                    this.imgFrame = this.anime.JUMP_UP.start;
+                }
+
+                // si le perso est collide avec l'adv en y -> comparer la pos.x du joueur et celui de l'adv pour décalage
+                // en x en positif ou negatif
+                break;
             default:
                 break;
         }
     }
 
-    is_collide(target) {
+
+    action(value, time) {
+        switch (value) {
+            case 0:
+                if (this.currentPersoState != PersoState.PUNCH) {
+                    this.makeDammage(time);
+                }
+                this.currentPersoState = PersoState.PUNCH;
+                if (this.anime.PUNCH.start > this.imgFrame || this.anime.PUNCH.end <= this.imgFrame) {
+                    this.imgFrame = this.anime.PUNCH.start;
+                }
+                break;
+            case 1:
+                this.currentPersoState = PersoState.KICK;
+                if (this.anime.KICK.start > this.imgFrame || this.anime.KICK.end <= this.imgFrame) {
+                    this.imgFrame = this.anime.KICK.start;
+                }
+                this.makeDammage(time);
+                break;
+            case 2:
+                this.currentPersoState = PersoState.DAMMAGE;
+                if (this.anime.DAMMAGE.start > this.imgFrame || this.anime.DAMMAGE.end <= this.imgFrame) {
+                    this.imgFrame = this.anime.DAMMAGE.start;
+                }
+                break;
+            case 3:
+                this.currentPersoState = PersoState.KO;
+                if (this.anime.KO.start > this.imgFrame || this.anime.KO.end <= this.imgFrame) {
+                    this.imgFrame = this.anime.KO.start;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+
+    isCollide() {
         // si mon polygon rentre en contact avec celui d'un autre joueur je retourne true
         // sinon je retourne false
         const response = new SAT.Response();
-        const collided = SAT.testPolygonPolygon(this.polygons, target, response);
-
+        const collided = SAT.testPolygonPolygon(this.polygons, this.opponents[0].polygons, response);
         return collided;
     }
 
@@ -319,73 +460,31 @@ export class Personnage {
         this.acceleration += force;
     }
 
-    enemyClose() {
-        // détection adversers adjacents
-        let enemyOnTheLeft, enemyOnTheRight, leftPlayer, rightPlayer;
-        // pour l'ensemble des joueurs  je vérifie leurs cases adjacentes
-        // si elles sont supérieurs à 0, alors il y a un joueur sinon elles sont vides
-        for (let player of this.tabPlayers) {
-            // si je suis en col 0 je regarde qu'à droite 
-            // si je suis en col (nbCol - 1) je regarde qu'à gauche 
-            // sion je regarde a gauche et a droite
-            if (player.position.x >= 0
-                && player.position.x <= (this.nbCol - 2) * player.cnvW
-                && this.bgGrid.coord_to_cell(player.position.x + player.cnvW, player.position.y).state > 0
-                && this.bgGrid.coord_to_cell(player.position.x + player.cnvW, player.position.y).state !== player.codePlayer) {
-                rightPlayer = this.bgGrid.coord_to_cell(player.position.x + player.cnvW, player.position.y).player;
-                enemyOnTheRight = rightPlayer != undefined;
-                //console.log(rightPlayer);
-            }
-            else if (player.position.x <= player.cnvW * (this.nbCol - 1)
-                && player.position.x >= player.cnvW
-                && this.bgGrid.coord_to_cell(player.position.x - player.cnvW, player.position.y).state > 0
-                && this.bgGrid.coord_to_cell(player.position.x - player.cnvW, player.position.y).state !== player.codePlayer) {
-                leftPlayer = this.bgGrid.coord_to_cell(player.position.x - player.cnvW, player.position.y).player;
-                enemyOnTheLeft = leftPlayer != undefined;
-                //console.log(leftPlayer);
-            }
-            else {
-                return;
-            }
-            /*  if ((enemyOnTheLeft || enemyOnTheRight) && (this.onAction == false)) {
-                 this.onAction = true; */
-            if (enemyOnTheLeft && (player.onAction == false)) {
-                player.onAction = true;
-                leftPlayer.onHit = true;
-                if (leftPlayer.hp <= 0) {
-                    leftPlayer.kO = true;
-                    leftPlayer.actionNum = 2;
-                    player.actionNum = 3;
-                }
-                else {
-                    player.actionNum = 0;
-                    leftPlayer.hp -= 10;
-                    leftPlayer.actionNum = 1;
-                }
-                if (player.dirInverse) player.dirInverse = false;
-                player.action();
-                leftPlayer.action();
-            }
-
-            if (enemyOnTheRight && (player.onAction == false)) {
-                player.onAction = true;
-                rightPlayer.onHit = true;
-                if (rightPlayer.hp <= 0) {
-                    rightPlayer.kO = true;
-                    rightPlayer.actionNum = 2;
-                    player.actionNum = 3;
-                }
-                else {
-                    player.actionNum = 0;
-                    rightPlayer.hp -= 10;
-                    rightPlayer.actionNum = 1;
-                }
-                if (!player.dirInverse) player.dirInverse = true;
-                player.action();
-                rightPlayer.action();
-            }
+    getDirection(startPos) {
+        if (startPos == startPos.LEFT) {
+            if (this.position.x > this.opponents[0].position.x)
+                return -1;
+            return 1;
+        }
+        else {
+            if (this.position.x < this.opponents[0].position.x)
+                return 1;
+            return -1;
         }
     }
+
+
+    makeDammage(time) {
+        this.collidingWithOpponent = this.isCollide();
+        if (this.opponents[0].hp > 0 && this.collidingWithOpponent && (this.currentPersoState == PersoState.PUNCH || this.currentPersoState == PersoState.KICK)) {
+            this.opponents[0].action(2);
+            this.opponents[0].hp -= 60 * time.secondsPassed;
+        }
+        if (this.opponents[0].hp < 0) {
+            this.opponents[0].action(3, time);
+        }
+    }
+
 
     controlsKeyDown(event) {
         if (!this.pressedKeys.includes(event.key))

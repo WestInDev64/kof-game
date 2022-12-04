@@ -37,16 +37,20 @@ export class Scene {
         this.procedural();
         this.spriteWidth = this.bgLayers[this.imgId].width;
         this.spriteHeight = this.bgLayers[this.imgId].height;
-        for (let point of this.proceduralTab) {
+       /* for (let point of this.proceduralTab) {
             this.platforms.push(
                 new SAT.Box(
                     new SAT.Vector(
                         this.cnvW * point.randJ,
-                        this.cnvH * point.randI + (this.cnvH - this.cnvH / 16),
-                        this.platformW,
-                        this.platformH)).toPolygon());
-        }
-        console.log(this.proceduralTab);
+                        this.cnvH * point.randI + (this.cnvH - this.cnvH / 16)),
+                    this.platformW,
+                    this.platformH).toPolygon());
+        } */
+        // SOL
+        this.platforms.push(
+            new SAT.Box(new SAT.Vector(- 50, this.cnv.height - 5), this.cnv.width + 100, this.platformH).toPolygon());
+
+        //console.log(this.proceduralTab);
     }
 
     /* Dessing Background */
@@ -114,10 +118,7 @@ export class Scene {
         this.ctx.fillStyle = gradient;
         for (let platform of this.platforms) {
             const box = platform.getAABBAsBox();
-            //console.log(this.platforms);
             this.ctx.fillRect(box.pos.x, box.pos.y, box.w, box.h);
-            /* this.ctx.fillRect(this.platformW * this.proceduralTab[i].randJ, this.cnvH * this.proceduralTab[i].randI + (this.cnvH - this.cnvH / 16), this.platformW, this.platformH);
-            this.ctx.strokeRect(this.platformW * this.proceduralTab[i].randJ, this.cnvH * this.proceduralTab[i].randI + (this.cnvH - this.cnvH / 16), this.platformW, this.platformH); */
         }
 
     }

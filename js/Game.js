@@ -12,12 +12,12 @@ import animebg from "../assets/img/bg/ruins/animebg.js";
 import animebg2 from "../assets/img/bg/shion/animebg.js";
 import animebg3 from "../assets/img/bg/alley/animebg.js";
 
-import { Personnage } from "./Personnage.js";
+import { Personnage, PersoState } from "./Personnage.js";
 import { Scene } from "./Scene.js";
 import { FpsCounter } from "./Gui.js";
 
 export class Game {
-    constructor(canvas,ctx) {
+    constructor(canvas, ctx) {
         this.cnv = canvas;
         this.ctx = ctx;
         this.tabPlayer = [];
@@ -28,6 +28,9 @@ export class Game {
         this.bgFolder = ["ruins", "shion", "alley"];                                    // 
         this.nbFramesBg = [animebg.nbFrames, animebg2.nbFrames, animebg3.nbFrames];
         this.bgAnime = [animebg, animebg2, animebg3];
+        this.sound = {
+            kick: new Audio('assets/sound/kick.mp3')
+        };
     }
 
     init() {
@@ -36,10 +39,9 @@ export class Game {
         this.scene.init();
 
         const persoTab = [
-            new Personnage("Mai", "Mai", "Mai Shiranui_", 'L', 1, detailanimeMai, this.cnv, this.ctx,this.scene),
+            new Personnage("Mai", "Mai", "Mai Shiranui_", 'L', 1, detailanimeMai, this.cnv, this.ctx, this.scene),
             new Personnage("King", "King", "King_", 'R', 2, detailanimeKing, this.cnv, this.ctx, this.scene),
         ];
-        
         this.fps = new FpsCounter(this.ctx);
         //console.table(this.gridObj.grid);
         //let calum = new Personnage("Sie Kensou", "Sie Kensou", "Sie Kensou_", 'R', 2, detailanimeSie, cnv, ctx);
@@ -48,10 +50,14 @@ export class Game {
         //let calum4 = new Personnage("Terry Bogard", "Terry Bogard", "Terry Bogard_", 'R', 2, detailanimeTerry, cnv, ctx);
         this.tabPlayer.push(persoTab[0]);
         this.tabPlayer.push(persoTab[1]);
+        this.tabPlayer[0].opponents.push(this.tabPlayer[1]);
+        this.tabPlayer[1].opponents.push(this.tabPlayer[0]);
         //this.tabPlayer.push(calum);
         //this.tabPlayer.push(calum2);
         //this.tabPlayer.push(calum3);
         //this.tabPlayer.push(calum4);
+
+
         for (let player of this.tabPlayer) {
             player.init();
         }
@@ -59,7 +65,6 @@ export class Game {
     }
 
     update(fps) {
-        //console.log(fps);
         this.clearCanvas();
         this.scene.drawBg();                                    // Dessine Bg
         this.scene.animeBg(fps);                                // Anime Bg
@@ -68,27 +73,17 @@ export class Game {
         this.fps.draw();
 
 
-        for (let player of this.tabPlayer) {
+        for (let i = (this.tabPlayer.length -1) ; i >= 0 ; i--) {
             //player.move(0);                                // Déplacement
             //this.tabPlayer[1].animeRandom();                               // Anime aléatoire
-            player.draw();                                      // Dessine perso
-            if (player.kO) {
-                // restart dans 1s
-                this.resDefer();
+            this.tabPlayer[i].draw();                                      // Dessine perso
+            this.tabPlayer[i].update(fps);
+
+            /* Gestion de l'ambiance sonore */
+            if([PersoState.PUNCH, PersoState.KICK].includes(this.tabPlayer[i].currentPersoState) && this.tabPlayer[i].is_collide()){
+                this.sound.kick.play();
             }
-            player.update(fps);
         }
-
-        // A chaque frame 
-        for (let player of this.tabPlayer) {
-            for (let i = 0; i < this.tabPlayer.length; i++) {
-                if (player.name !== this.tabPlayer[i].name) {
-                    player.isCollide = player.is_collide(this.tabPlayer[i].polygons);
-                }
-            }
-
-        }
-
     }
 
 
@@ -131,7 +126,7 @@ export class Game {
         const ratio = Math.min(ratioW, ratioH);
         const w = baseW * ratio;
         const h = baseH * ratio;
- 
+
         this.cnv.width = w;
         this.cnv.height = h;
 

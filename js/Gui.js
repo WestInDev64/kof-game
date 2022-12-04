@@ -4,14 +4,69 @@ export class FpsCounter {
         this.fps = 0;
     }
 
-    update(time){
+    update(time) {
         this.fps = Math.trunc(1 / time.secondsPassed);
     }
 
-    draw(){
+    draw() {
         this.ctx.font = "bold 20px Arial";
         this.ctx.fillStyle = "black";
         this.ctx.textAlign = "center";
         this.ctx.fillText(`FPS : ${this.fps}`, this.ctx.canvas.width / 2, 30);
+    }
+}
+
+//New class Menu because i don't understand your canvas at all
+export class Menu {
+    constructor({
+        pos,
+        imgSrc,
+        scale = 1,
+        framesMax = 1,
+        offset = { x: 0, y: 0 },
+        ctx
+    }) {
+        this.pos = pos
+        this.height = 300
+        this.width = 100
+        this.image = new Image()
+        this.image.src = imgSrc
+        this.scale = scale
+        this.framesMax = framesMax
+        this.framesCurrent = 0
+        this.framesElapsed = 0
+        this.framesHold = this.offset = offset
+        this.ctx = ctx;
+    }
+    //added
+    draw() {
+        this.ctx.drawImage(
+            this.image,
+            this.framesCurrent * (this.image.width / this.framesMax),
+            0,
+            this.image.width / this.framesMax,
+            this.image.height,
+            this.pos.x - this.offset.x,
+            this.pos.y - this.offset.y,
+            (this.image.width / this.framesMax) * this.scale,
+            this.image.height * this.scale
+        )
+    }
+    //added
+    frames() {
+        this.framesElapsed++
+
+        if (this.framesElapsed % this.framesHold === 0) {
+            if (this.framesCurrent < this.framesMax - 1) {
+                this.framesCurrent++
+            } else {
+                this.framesCurrent = 0
+            }
+        }
+    }
+    // methode pour mettre a jour, les pos des personnages.
+    animer() {
+        this.draw()
+        this.frames()
     }
 }

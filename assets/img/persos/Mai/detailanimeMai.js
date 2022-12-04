@@ -33,16 +33,16 @@ export default {
         },
         {
             name: "KICK",
-            start: 107,
-            end: 114,
+            start: 134,
+            end: 140,
         },
         {
-            name: "dammaged",
+            name: "DAMMAGE",
             start: 509,
             end: 512,
         },
         {
-            name: "ko",
+            name: "KO",
             start: 522,
             end: 525,
         }

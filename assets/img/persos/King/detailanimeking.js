@@ -37,12 +37,12 @@ export default {
             end: 81,
         },
         {
-            name: "dammaged",
+            name: "DAMMAGE",
             start: 23,
             end: 25,
         },
         {
-            name: "ko",
+            name: "KO",
             start: 32,
             end: 39,
         }
