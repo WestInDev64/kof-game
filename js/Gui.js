@@ -30,7 +30,7 @@ export class Overlay {
     draw() {
         this.ctx.font = "bold 20px Arial";
         this.ctx.strokeStyle='black';
-        this.ctx.fillStyle = "yellow";
+        this.ctx.fillStyle = "black";
         this.ctx.textAlign = "left";
         this.ctx.fillText(`${this.game.tabPlayer[0].name} hp: ${Math.round(this.game.tabPlayer[0].hp)}%`, 30, 30);
         this.ctx.fillText(`hp: ${Math.round(this.game.tabPlayer[1].hp)}%`, this.cnv.width - 100, 30);

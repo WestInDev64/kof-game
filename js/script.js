@@ -14,9 +14,9 @@ const audio = new Audio('assets/sound/ok.mp3');
 //Pour le boutton play
 let menu = true;
 
-const btn1Play = document.querySelector('#btnPlay'); 
-const btnRefresh = document.querySelector('#btnRefresh'); 
-const btnAudio = document.querySelector('#btnAudio'); 
+const btn1Play = document.querySelector('#btnPlay');
+const btnRefresh = document.querySelector('#btnRefresh');
+const btnAudio = document.querySelector('#btnAudio');
 const coordMai = document.querySelector('#coord');
 
 const menuImage = new Menu({
@@ -37,9 +37,8 @@ let fps = {
 
 //added for the button 
 btn1Play.addEventListener('click', function () {
-    menu = false
-    //document.querySelector('#btnPlay').style.display = 'none'
-    window.requestAnimationFrame(update);
+    game.init();
+    document.querySelector('#btnPlay').style.display = 'none'
 });
 
 btnRefresh.addEventListener('click', () => {
@@ -67,6 +66,7 @@ function update(time) {
         case GameState.INTRO:
             game.introScene.draw();
             game.introScene.update(fps);
+            //game.introScene.music.play();
             break;
         case GameState.INGAME:
             game.update(fps);
@@ -99,6 +99,7 @@ hauteur : C’est un paramètre facultatif et indique la hauteur de l’image à
 
 /* Keyboard keydown autorisés */
 window.document.addEventListener('keydown', event => {
+    console.log(event.key);
     switch (event.key) {
         case "ArrowRight":
         case "ArrowLeft":
@@ -110,7 +111,13 @@ window.document.addEventListener('keydown', event => {
         case "v":
         case "d":
         case "k":
-            game.tabPlayer[0].controlsKeyDown(event);
+        case " ":
+            if (game.gameState == GameState.INTRO)
+                game.introScene.controlsKeyDown(event);
+            if (game.gameState == GameState.INGAME)
+                game.tabPlayer[0].controlsKeyDown(event);
+            break;
+        default:
             break;
     }
 });
@@ -128,7 +135,8 @@ window.document.addEventListener('keyup', event => {
         case "v":
         case "d":
         case "k":
-            game.tabPlayer[0].controlsKeyUp(event);
+            if (game.gameState == GameState.INGAME)
+                game.tabPlayer[0].controlsKeyUp(event);
             break;
     }
 });

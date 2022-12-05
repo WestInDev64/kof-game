@@ -38,6 +38,7 @@ export class Game {
         this.nbFramesBg = [animebg.nbFrames, animebg2.nbFrames, animebg3.nbFrames];
         this.bgAnime = [animebg, animebg2, animebg3];
         this.sound = {
+            music: new Audio('assets/sound/ok.mp3'),
             kick: new Audio('assets/sound/kick.mp3')
         };
         this.overlay;
@@ -47,11 +48,12 @@ export class Game {
     }
 
     intro() {
-        this.introScene = new Intro(this.cnv,this.ctx);
+        this.introScene = new Intro(this.cnv,this.ctx, this);
         this.introScene.init();
     }
 
     init() {
+        this.gameState = GameState.INGAME;
         /* Init backgrounds */
         const randBg = Math.floor(Math.random() * 3);
         this.scene = new Scene(this.cnv, this.ctx, this.bgFolder[randBg], this.nbFramesBg[randBg], this.bgAnime[randBg]);
