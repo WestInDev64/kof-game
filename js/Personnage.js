@@ -66,15 +66,12 @@ export class Personnage {
         this.speed = 0;
         this.gravity = 10;
 
-
         /* Déplacements - Mouvements*/
-
         this.direction = 4;
         this.actionNum = 0;
         this.onAction = false;
         this.onHit = false;
         this.collidingWithOpponent = false;
-
 
         /* Les états */
         this.isColliding = false;
@@ -89,7 +86,6 @@ export class Personnage {
         this.pressedKeys = [];
         this.platforms = scene.platforms;
         this.opponents = [];
-
     }
 
     loadImg() {
@@ -116,10 +112,6 @@ export class Personnage {
         this.hpBar = new HealthBar(this, this.cnv, this.ctx, this.position.x, this.position.y, this.hp, this.hpMax, this.cnvW, this.cnvH);
     }
 
-
-    idle() {
-        this.direction = 0;
-    }
 
     draw() {
         /**

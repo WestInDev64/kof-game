@@ -2,12 +2,8 @@
 export class Scene {
     constructor(canvas, ctx, bgFolder, bgFramesNb, detailAnime) {
         this.cnv = canvas;
-        this.cnvW = 128 / 2;
-        this.cnvH = 120;
         this.bgFolder = bgFolder;
         this.bgLayers = [];
-        this.cnvW = 128 / 2;
-        this.cnvH = 120;
         this.ctx = ctx;
         this.nbBgFrames = bgFramesNb;
         this.img;
@@ -41,8 +37,8 @@ export class Scene {
             this.platforms.push(
                 new SAT.Box(
                     new SAT.Vector(
-                        this.cnvW * point.randJ,
-                        this.cnvH * point.randI + (this.cnvH - this.cnvH / 16)),
+                        this.platformW * point.randJ,
+                        this.platformH * point.randI + (this.cnvH - this.cnvH / 16)),
                     this.platformW,
                     this.platformH).toPolygon());
         } */
@@ -54,12 +50,15 @@ export class Scene {
     }
 
     /* Dessing Background */
-    drawBg() {
+    drawBg(camera) {
         const ratioW = this.cnv.width / this.bgLayers[this.imgId].width;
         const ratioH = this.cnv.height / this.bgLayers[this.imgId].height;
         const ratio = Math.max(ratioW, ratioH);
         const w = this.bgLayers[this.imgId].width * ratio;
         const h = this.bgLayers[this.imgId].height * ratio;
+        //const h = (this.bgLayers[this.imgId].height / this.bgLayers[this.imgId].width) * this.cnv.width;
+        //const w = this.cnv.width;
+        //console.log(h, w);
         this.ctx.save();
         /**
          * Translate la position du contexte et décale l'origine du canvas 0,0
@@ -74,12 +73,13 @@ export class Scene {
          * @param dY        : coord y position de l'image dans le canvas
          * @param dWidth    : Largeur de l'image
          * @param dHeight   : Hauteur de l'image
-         * @param sx        : coord x 
-         * @param sy        : Image à dessiner
-         * @param sLargeur  : Image à dessiner
-         * @param sHauteur  : Image à dessiner
+         * @param sx        :  
+         * @param sy        : 
+         * @param sLargeur  : 
+         * @param sHauteur  : 
          */
         this.ctx.drawImage(this.bgLayers[this.imgId], 0, 0, this.bgLayers[this.imgId].width, this.bgLayers[this.imgId].height, -w / 2, -h / 2, w, h);
+        //this.ctx.drawImage(this.bgLayers[this.imgId], 0, 0, this.bgLayers[this.imgId].width, this.bgLayers[this.imgId].height, Math.floor(16 - (camera.position.x / 2)), -camera.position.y, w, h);
         this.ctx.restore();
     }
 
@@ -123,17 +123,4 @@ export class Scene {
 
     }
 
-    updatePosition() {
-        this.position.x = this.gridPosition.x * this.tileWidth;
-        this.position.y = this.gridPosition.y * this.tileHeight;
-    }
-
-
-
-    _onResize() {
-        this.bgLayers[0].width = this.cnv.width / 16;
-        this.bgLayers[0].height = this.cnv.height / 9;
-
-        this.updatePosition();
-    }
 }

@@ -1,4 +1,4 @@
-import { Game } from "./Game.js";
+import { Game, GameState } from "./Game.js";
 import { Menu } from "./Gui.js";
 
 const cnv = document.getElementById('myCanvas');
@@ -9,11 +9,15 @@ cnv.style.height = window.document.innerHeight + "px";
 ctx.imageSmoothingEnabled = false;
 
 
-//const audio = new Audio('assets/sound/ok.mp3');
+const audio = new Audio('assets/sound/ok.mp3');
 
 //Pour le boutton play
-let menu = false;
+let menu = true;
+
 const btn1Play = document.querySelector('#btnPlay'); 
+const btnRefresh = document.querySelector('#btnRefresh'); 
+const btnAudio = document.querySelector('#btnAudio'); 
+const coordMai = document.querySelector('#coord');
 
 const menuImage = new Menu({
     pos: { x: 0, y: 0 },
@@ -30,33 +34,50 @@ let fps = {
     secondsPassed: 0
 };
 
+
 //added for the button 
 btn1Play.addEventListener('click', function () {
     menu = false
-    document.querySelector('#btnPlay').style.display = 'none'
+    //document.querySelector('#btnPlay').style.display = 'none'
     window.requestAnimationFrame(update);
-})
+});
 
+btnRefresh.addEventListener('click', () => {
+    window.document.location.reload();
+});
+
+btnAudio.addEventListener('click', () => {
+    audio.play();
+});
 
 const game = new Game(cnv, ctx);
-game.init();
 game.start();
+//game.init();
 
 
 function update(time) {
-    if (!menu) {
-        window.requestAnimationFrame(update);
+    window.requestAnimationFrame(update);
 
-        fps = {
-            secondsPassed: (time - fps.previous) / 1000,
-            previous: time,
-        };
-        
-        //audio.play();
-        game.update(fps);
+    fps = {
+        secondsPassed: (time - fps.previous) / 1000,
+        previous: time,
+    };
+
+    switch (game.gameState) {
+        case GameState.INTRO:
+            game.introScene.draw();
+            game.introScene.update(fps);
+            break;
+        case GameState.INGAME:
+            game.update(fps);
+            break;
+        default:
+            break;
     }
-    else {
-        menuImage.animer();
+    if (!menu) {
+        coordMai.textContent = `Positions: 
+        Mai {${game.tabPlayer[0].position.x}, ${game.tabPlayer[0].position.y}} --- 
+        King  {${game.tabPlayer[1].position.x}, ${game.tabPlayer[1].position.y}}`;
     }
 }
 
