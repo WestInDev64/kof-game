@@ -1,45 +1,52 @@
 export default {
-    nbFrames: 237,
+    nbFrames: 216,
     animations: [
         {
-            name: "idle",
+            name: "IDLE",
             start: 0,
-            end: 4
+            end: 3
         },
         {
-            name: "walkFwd",
-            start: 5,
+            name: "WALK_FWD",
+            start: 4,
+            end: 9
+        },
+        {
+            name: "WALK_BWD",
+            start: 10,
             end: 15
         },
         {
-            name: "walkBwd",
-            start: 5,
-            end: 15
-        },
-        {
-            name: "jump",
+            name: "JUMP_UP",
             start: 16,
-            end: 29,
+            end: 21,
         },
         {
-            name: "crouch", // i guess it starts from just in 30 HAVE TO RESEE THIS ONE
-            start: 30,
+            name: "CROUCH",
+            start: 29,
             end: 30,
         },
         {
-            name: "kick",
-            start: 88,
-            end: 94,
+            name: "PUNCH",
+            start: 50,
+            end: 51,
         },
         {
-            name: "dammaged",
-            start: 23,
-            end: 25,
+            name: "KICK",
+            start: 58,
+            end: 62,
         },
         {
-            name: "ko",
-            start: 211,
+            name: "DAMMAGE",
+            start: 202,
+            end: 207,
+        },
+        {
+            name: "KO",
+            start: 208,
             end: 215,
         }
-    ]
+    ],
+    fileName: "Kyo Kusanagi_",
+    name: "Kyo"
 };

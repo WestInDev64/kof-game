@@ -4,16 +4,17 @@
     box-sizing: border-box;
 }
 
-body, html {
-    overflow: hidden;
-}
-
 canvas {
     border: 1px solid black;
-    width: 100%;
+    height: 100%;
     object-fit: contain;
     image-rendering: crisp-edges;
     image-rendering: pixelated;
+}
+
+.container{
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .container-navbar ol{
@@ -22,4 +23,24 @@ canvas {
 
 li {
     flex: auto;
+}
+
+
+.outer {
+  border: 2px solid #666666;
+  position: relative;
+  overflow: hidden;
+}
+.inner {
+  position: absolute;
+  left: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+.inner::-webkit-scrollbar {
+  display: none;
+}
+.inner {
+  -ms-overflow-style: none; 
+  overflow: -moz-scrollbars-none; 
 }

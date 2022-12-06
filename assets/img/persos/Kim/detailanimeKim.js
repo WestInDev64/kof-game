@@ -1,5 +1,5 @@
 export default {
-    nbFrames: 96,
+    nbFrames: 140,
     animations: [
         {
             name: "IDLE",
@@ -9,22 +9,32 @@ export default {
         {
             name: "WALK_FWD",
             start: 4,
-            end: 6
+            end: 8
         },
         {
             name: "WALK_BWD",
-            start: 4,
-            end: 6
+            start: 9,
+            end: 12
         },
         {
             name: "JUMP_UP",
-            start: 9,
-            end: 15,
+            start: 16,
+            end: 18,
+        },
+        {
+            name: "JUMP_FWD",
+            start: 19,
+            end: 23,
+        },
+        {
+            name: "JUMP_BWD",
+            start: 24,
+            end: 27,
         },
         {
             name: "CROUCH",
-            start: 7,
-            end: 8,
+            start: 28,
+            end: 29,
         },
         {
             name: "PUNCH",
@@ -33,20 +43,20 @@ export default {
         },
         {
             name: "KICK",
-            start: 78,
-            end: 81,
+            start: 65,
+            end: 70,
         },
         {
             name: "DAMMAGE",
-            start: 23,
-            end: 25,
+            start: 125,
+            end: 127,
         },
         {
             name: "KO",
-            start: 32,
-            end: 39,
+            start: 128,
+            end: 139,
         }
     ],
-    fileName: "King_",
-    name: "King"
+    fileName: "Kim Kaphwan_",
+    name: "Kim"
 };

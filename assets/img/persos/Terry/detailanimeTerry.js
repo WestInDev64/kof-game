@@ -1,52 +1,52 @@
 export default {
-    nbFrames: 526,
+    nbFrames: 96,
     animations: [
         {
             name: "IDLE",
             start: 0,
-            end: 11
+            end: 3
         },
         {
             name: "WALK_FWD",
-            start: 12,
-            end: 16
+            start: 4,
+            end: 10
         },
         {
             name: "WALK_BWD",
-            start: 12,
-            end: 16
+            start: 4,
+            end: 10
         },
         {
             name: "JUMP_UP",
-            start: 24,
-            end: 32,
+            start: 18,
+            end: 20,
         },
         {
             name: "CROUCH",
-            start: 33,
-            end: 34,
+            start: 11,
+            end: 12,
         },
         {
             name: "PUNCH",
-            start: 107,
-            end: 114,
+            start: 63,
+            end: 66,
         },
         {
             name: "KICK",
-            start: 134,
-            end: 140,
+            start: 72,
+            end: 76,
         },
         {
             name: "DAMMAGE",
-            start: 509,
-            end: 512,
+            start: 27,
+            end: 32,
         },
         {
             name: "KO",
-            start: 522,
-            end: 525,
+            start: 33,
+            end: 42,
         }
     ],
-    fileName: "Mai Shiranui_",
-    name: "Mai"
+    fileName: "Terry Bogard_",
+    name: "Terry"
 };

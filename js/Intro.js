@@ -35,11 +35,6 @@ export class Intro {
                 x: this.cnv.width * 0.4,
                 y: this.cnv.height * 0.7
             },
-            exit: {
-                text: "Exit",
-                x: this.cnv.width * 0.4,
-                y: this.cnv.height * 0.75
-            },
         };
     }
 
@@ -57,15 +52,12 @@ export class Intro {
             jslogo.src = `assets/img/sprt/js-logo/frame_${i.toString().padStart(2, '0')}.png`;
             this.jsLogoAnime.array.push(jslogo);
         }
-
-        console.log(this.ioriAnime);
-        console.log(this.jsLogoAnime);
     }
 
 
     init() {
         this.loadimg();
-    }
+    } 
 
 
     update(time) {
@@ -79,12 +71,12 @@ export class Intro {
             if (this.ioriAnime.frame > (this.ioriAnime.nb - 1))
                 this.ioriAnime.frame = 0;
         }
-        //console.log(this.jsLogoAnime.frame);
-        //console.log(this.ioriAnime.frame);
+
     }
 
 
     draw() {
+        this.clearCanvas();
         /* const ratioW = this.cnv.width / this.bgLayers[this.imgId].width;
         const ratioH = this.cnv.height / this.bgLayers[this.imgId].height;
         const ratio = Math.max(ratioW, ratioH);
@@ -119,20 +111,15 @@ export class Intro {
         }
         this.jsLogoAnime.frame % 4 == 0 ? this.ctx.fillStyle = "red" : this.ctx.fillStyle = "darkblue";
         this.ctx.fill();
-        this.ctx.fillStyle = "yellow";
+        this.ctx.fillStyle = "orange";
         this.ctx.textAlign = "left";
         this.ctx.fillText(this.menu.new_game.text, this.menu.new_game.x, this.menu.new_game.y);
         this.ctx.fillText(this.menu.demo.text, this.menu.demo.x, this.menu.demo.y);
         this.ctx.fillText(`${this.menu.sound.text}${this.musicState}`, this.menu.sound.x, this.menu.sound.y);
-        this.ctx.fillText(this.menu.exit.text, this.menu.exit.x, this.menu.exit.y);
         this.ctx.font = "bold 12px system-ui";
         this.ctx.fillText(`version plus que Beta v0.0.1`, w * 0.7, this.cnv.height * 0.97);
         if (this.ioriAnime.frame > 10)
-            this.ctx.fillText(`Press "space"`, w * 0.1, this.cnv.height * 0.97);
-
-
-
-
+            this.ctx.fillText(`Insert Coin -> Press "W"`, w * 0.1, this.cnv.height * 0.97);
     }
 
     drawCursor(menu) {
@@ -144,14 +131,31 @@ export class Intro {
         this.ctx.closePath();
     }
 
+    clearCanvas() {
+        this.ctx.fillStyle = "#FFFFFF";
+        /**
+         * ClearRect: rectangle vide (efface le fond)
+         * fillRect : rectangle plein
+         * strokeRect : rectangle surligné
+         * @param x : coin sup gauche du rectangle 
+         * @param y : coin sup gauche du rectangle 
+         * @param w : largeur du rectangle 
+         * @param h : hauteur du rectangle 
+         */
+        //ctx.clearRect(this.posX, this.posY, 128, 120);
+        this.ctx.fillRect(0, 0, this.cnv.width, this.cnv.height);
+    }
+
     controlsKeyDown(event) {
-        console.log(event.key);
+        //console.log(event.key);
         if (this.currentSelect > 3) this.currentSelect = 0;
         switch (event.key) {
-            case " ":
-                if(this.currentSelect == 0) this.game.init();
-                if(this.currentSelect == 1) this.game.init();
-                if(this.currentSelect == 2) {
+            case "w":
+                if(this.currentSelect == 0) {
+                    this.game.selectPerso();
+                }
+                else if(this.currentSelect == 1) this.game.demo();
+                else if(this.currentSelect == 2) {
                     //console.log("TEST", this.musicState, this.currentSelect);
                     if(this.musicState == "OFF"){
                         this.musicState = "ON";
@@ -162,10 +166,9 @@ export class Intro {
                         this.game.sound.music.pause();
                     }
                 }
-                if(this.currentSelect == 3) this.game.init();
                 break;
             case "ArrowDown":
-                if (this.currentSelect < 3)
+                if (this.currentSelect < 2)
                     this.currentSelect++;
                 break;
             case "ArrowUp":
@@ -176,5 +179,6 @@ export class Intro {
                 break;
         }
 
-    }
+    }z
+
 }

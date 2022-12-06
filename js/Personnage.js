@@ -1,4 +1,7 @@
 import { HealthBar, Color } from "./HealthBar.js";
+import { getRandomArbitrary, findAndRemove } from "./Utiles.js";
+
+
 export const PersoState = {
     IDLE: "IDLE",
     WALK_FWD: "WALK_FWD",
@@ -21,40 +24,30 @@ export const startPos = {
 
 // PERSONNAGE
 export class Personnage {
-    constructor(name, assetsFolder, imgNamePng, startPosition, codePlayer, json, canvas, ctx, scene) {
+    constructor(config, startPosition, canvas, ctx, scene) {
+        this.config = config;
+
         /* Rendu */
         this.cnv = canvas;
         this.ctx = ctx;
 
-        /* Details perso */
-        this.name = name;
-        this.codePlayer = codePlayer;
+        /* configs perso */
+        this.name;
         this.hp = 100;
         this.hpMax = 100;
         this.kO = false;
         this.startPosition = startPosition;
+        this.assetsFolder;
+        this.imgNamePng;
 
         /* Sprites & animations */
-        this.imgNamePng = imgNamePng;
-        this.assetsFolder = assetsFolder;
         this.assets = [];
         this.imgFrame = 0;
-        this.detail = json;
         this.currentSpriteH;
         this.currentSpriteW;
         this.img;
         this.timeAnimation = 0;
-        this.anime = {
-            IDLE: this.detail.animations.find(a => a.name === 'IDLE'),
-            WALK_FWD: this.detail.animations.find(a => a.name === 'WALK_FWD'),
-            WALK_BWD: this.detail.animations.find(a => a.name === 'WALK_BWD'),
-            JUMP_UP: this.detail.animations.find(a => a.name === 'JUMP_UP'),
-            CROUCH: this.detail.animations.find(a => a.name === 'CROUCH'),
-            PUNCH: this.detail.animations.find(a => a.name === 'PUNCH'),
-            KICK: this.detail.animations.find(a => a.name === 'KICK'),
-            DAMMAGE: this.detail.animations.find(a => a.name === 'DAMMAGE'),
-            KO: this.detail.animations.find(a => a.name === 'KO'),
-        };
+        this.anime;
 
         /* Position taille  */
         this.cnvW = 128 / 2;
@@ -82,14 +75,18 @@ export class Personnage {
         /* Objets rattachés */
         this.hpBar;
         this.polygons;
+        this.scene = scene;
+        this.platforms;
 
         this.pressedKeys = [];
-        this.platforms = scene.platforms;
         this.opponents = [];
+        this.randomInt;
+        this.currentAiAction;
+        this.currentAiAttack;
     }
 
     loadImg() {
-        for (let i = 0; i < this.detail.nbFrames; i++) {
+        for (let i = 0; i < this.config.nbFrames; i++) {
             this.img = new Image();
             this.img.src = `assets/img/persos/${this.assetsFolder}/${this.imgNamePng}${i}.png`;
             this.assets.push(this.img);
@@ -97,7 +94,24 @@ export class Personnage {
     }
 
     init() {
+        this.name = this.config.name;
+        this.assetsFolder = this.config.name;
+        this.imgNamePng = this.config.fileName;
+        this.anime = {
+            IDLE: this.config.animations.find(a => a.name === 'IDLE'),
+            WALK_FWD: this.config.animations.find(a => a.name === 'WALK_FWD'),
+            WALK_BWD: this.config.animations.find(a => a.name === 'WALK_BWD'),
+            JUMP_UP: this.config.animations.find(a => a.name === 'JUMP_UP'),
+            CROUCH: this.config.animations.find(a => a.name === 'CROUCH'),
+            PUNCH: this.config.animations.find(a => a.name === 'PUNCH'),
+            KICK: this.config.animations.find(a => a.name === 'KICK'),
+            DAMMAGE: this.config.animations.find(a => a.name === 'DAMMAGE'),
+            KO: this.config.animations.find(a => a.name === 'KO'),
+        };
         this.loadImg();
+        this.platforms = this.scene.platforms;
+
+
         if (this.startPosition == startPos.LEFT) {
             this.position.x = 2 * this.cnvW;
             this.position.y = 3 * this.cnvH;
@@ -110,6 +124,7 @@ export class Personnage {
             this.position.y = lin * this.cnvH;
         }
         this.hpBar = new HealthBar(this, this.cnv, this.ctx, this.position.x, this.position.y, this.hp, this.hpMax, this.cnvW, this.cnvH);
+
     }
 
 
@@ -133,13 +148,13 @@ export class Personnage {
             this.ctx.scale(-1, 1);
         }
         this.ctx.drawImage(this.assets[this.imgFrame], 0, 0);
-        this.ctx.fillStyle = "#00FFFF75";
-        this.ctx.fillRect(0, 0, this.currentSpriteW, this.currentSpriteH);
+        // this.ctx.fillStyle = "#00FFFF75";
+        // this.ctx.fillRect(0, 0, this.currentSpriteW, this.currentSpriteH);
         this.ctx.restore();                                                     // Restore le contexte
-
         this.updateDynamicObj();                                                // Met à jour les polygons
+       //this.drawPolygon(this.polygons);                                        // Dessine les polygons dans le context du perso
+
         this.hpBar.rodolpheBar();
-        this.drawPolygon(this.polygons);                                        // Dessine les polygons dans le context du perso
     }
 
     drawPolygon(polygon) {
@@ -168,19 +183,69 @@ export class Personnage {
             new SAT.Vector(this.currentSpriteW * 0.5, this.currentSpriteH),
             new SAT.Vector(this.currentSpriteW * 0.5, 0)
             ]);
+    }
+
+    animeRandom(time) {
+
+
+        for (let opponent of this.opponents) {
+            if (this.isCollide(opponent)) {
+                const shouldMove = Math.random() > 0.85;
+                if (shouldMove)
+                    this.attackRandom(time);
+            }
+            else {
+                /* On check si l'iA est en action */
+                if (this.currentAiAction) {
+                    // il continu son action
+
+                    this.move(this.currentAiAction.actionId, time);
+
+                    // si il a terminé son action 
+                    if (this.currentAiAction.end < (new Date()).getTime()) {
+
+                        this.currentAiAction = null;
+                    }
+                    return;
+                }
+
+                // Il decide une nouvelle action 
+                this.currentAiAction = {
+                    actionId: Math.floor(Math.random() * 7),
+                    end: (new Date()).getTime() + 500 + Math.random() * 300
+                };
+                this.move(this.currentAiAction.actionId, time);
+            }
+        }
+
 
     }
 
-    animeRandom() {
-        const isIdle = this.imgFrame >= this.anime.IDLE.start && this.imgFrame <= this.anime.IDLE.end;
-        const shouldMove = Math.random() > 0.85;
-        if (isIdle && shouldMove) {
-            const direction = Math.floor(Math.random() * 5);
-            this.direction = direction;
+    attackRandom(time) {
+        /* On check si l'iA est en action */
+        if (this.currentAiAttack) {
+            // il continu son action
+
+            this.action(this.currentAiAttack.attackId, time);
+
+            // si il a terminé son action 
+            if (this.currentAiAttack.end < (new Date()).getTime()) {
+
+                this.currentAiAttack = null;
+            }
+            return;
         }
-        else {
-            this.direction = 0;
-        }
+
+        // Il decide une nouvelle action 
+        this.currentAiAttack = {
+            attackId: Math.floor(Math.random() * 2),
+            end: (new Date()).getTime() + 3000 + Math.random() * 1000
+        };
+
+
+        // applique l'action immediatement
+        this.action(this.currentAiAttack.attackId, time);
+
     }
 
 
@@ -192,29 +257,29 @@ export class Personnage {
             this.imgFrame++;
         }
 
-        if (this.pressedKeys.length == 0) this.move(0);                 // Idle
+        if (this.pressedKeys.length == 0) this.move(0, time);                 // Idle
         /* Gestion des mouvements au clavier sans à-coups*/
         if (this.pressedKeys.includes("ArrowDown")) {
-            this.move(4);                                               // S'accroupir
+            this.move(4, time);                                               // S'accroupir
             /* Retirer les touches du tab lorsque l'on est baissé */
             findAndRemove(this.pressedKeys, "ArrowLeft");
             findAndRemove(this.pressedKeys, "ArrowRight");
             findAndRemove(this.pressedKeys, "ArrowUp");
         }
-        if (this.pressedKeys.length == 1 && this.pressedKeys.includes("ArrowRight")) this.move(1);      // Droite
-        if (this.pressedKeys.length == 1 && this.pressedKeys.includes("ArrowLeft")) this.move(2);       // Gauche
+        if (this.pressedKeys.length == 1 && this.pressedKeys.includes("ArrowRight")) this.move(1, time);      // Droite
+        if (this.pressedKeys.length == 1 && this.pressedKeys.includes("ArrowLeft")) this.move(2, time);       // Gauche
         if (this.pressedKeys.length == 1 && this.pressedKeys.includes("ArrowUp")) {                     // Sauter
-            this.move(3);
+            this.move(3, time);
         }
         if (this.pressedKeys.length == 2
             && this.pressedKeys.includes("ArrowRight")
             && this.pressedKeys.includes("ArrowUp")) {
-            this.move(5);                                                                               // Saut + Droite
+            this.move(5, time);                                                                               // Saut + Droite
         }
         if (this.pressedKeys.length == 2
             && this.pressedKeys.includes("ArrowLeft")
             && this.pressedKeys.includes("ArrowUp")) {
-            this.move(6);                                                                               // Saut + Droite
+            this.move(6, time);                                                                               // Saut + Droite
         }
 
 
@@ -265,11 +330,11 @@ export class Personnage {
     }
 
 
-    move(value) {
+    move(value, time) {
         switch (value) {
             case 0: // IDLE
                 this.currentPersoState = PersoState.IDLE;
-                for (const anime of this.detail.animations) {
+                for (const anime of this.config.animations) {
                     if (this.imgFrame == anime.end) {
                         this.imgFrame = this.anime.IDLE.start;
                         //this.onAction = false;
@@ -278,73 +343,77 @@ export class Personnage {
                 break;
             case 1: // DROITE
                 this.currentPersoState = PersoState.WALK_FWD;
-                // Contrainte sans collision
-                if (this.position.x < this.cnv.width - this.cnvW && (!this.isCollide())) this.position.x += 2;
-
                 // Contrainte avec collision ennemy
-                if (this.opponents[0].position.x < this.cnv.width - this.opponents[0].cnvW
-                    && this.isCollide()
-                    && [PersoState.IDLE, PersoState.CROUCH, PersoState.JUMP_UP, PersoState.JUMP_FWD, PersoState.JUMP_BWD].includes(this.opponents[0].currentPersoState)) {
-                    this.direction = this.getDirection(this.startPosition);
-                    switch (this.startPosition) {
-                        case PersoState.LEFT:
-                            if (this.direction == 1) {
-                                this.position.x += 2;
-                                this.opponents[0].position.x += 2;
-                            } else {
-                                this.position.x += 2;
-                            }
-                            break;
-                        case PersoState.RIGHT:
-                            if (this.direction == 1) {
-                                this.position.x += 2;
-                            } else {
-                                this.position.x += 2;
-                                this.opponents[0].position.x += 2;
-                            }
-                            break;
-                        default:
-                            break;
+                for (let opponent of this.opponents) {
+
+                    if (this.position.x < this.cnv.width - this.cnvW && (!this.isCollide(opponent)))
+                        this.position.x += 60 * time.secondsPassed;
+
+                    if (opponent.position.x < this.cnv.width - opponent.cnvW
+                        && this.isCollide(opponent)
+                        && [PersoState.IDLE, PersoState.CROUCH, PersoState.JUMP_UP, PersoState.JUMP_FWD, PersoState.JUMP_BWD].includes(opponent.currentPersoState)) {
+                        this.direction = this.getDirection(this.startPosition);
+                        switch (this.startPosition) {
+                            case PersoState.LEFT:
+                                if (this.direction == 1) {
+                                    this.position.x += 2;
+                                    opponent.position.x += 2;
+                                } else {
+                                    this.position.x += 2;
+                                }
+                                break;
+                            case PersoState.RIGHT:
+                                if (this.direction == 1) {
+                                    this.position.x += 2;
+                                } else {
+                                    this.position.x += 2;
+                                    opponent.position.x += 2;
+                                }
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
                 // Animation de marche possible au bord de la grille
-                if (this.anime.WALK_FWD.start > this.imgFrame || this.anime.WALK_FWD.end <= this.imgFrame)
+                if (this.anime.WALK_FWD.start > this.imgFrame || this.anime.WALK_FWD.end < this.imgFrame)
                     this.imgFrame = this.anime.WALK_FWD.start;
                 break;
             case 2: // GAUCHE
                 this.currentPersoState = PersoState.WALK_FWD;
-                if (this.position.x > 0 && (!this.isCollide())) this.position.x -= 2;
+                for (let opponent of this.opponents) {
+                    if (this.position.x > 0 && (!this.isCollide(opponent))) this.position.x -= 60 * time.secondsPassed;
 
-                if (this.opponents[0].position.x > 0
-                    && this.isCollide()
-                    && [PersoState.IDLE, PersoState.CROUCH, PersoState.JUMP_UP, PersoState.JUMP_FWD, PersoState.JUMP_BWD].includes(this.opponents[0].currentPersoState)) {
-                    this.direction = this.getDirection(this.startPosition);
-                    switch (this.startPosition) {
-                        case PersoState.LEFT:
-                            if (this.direction == 1) {
-                                this.position.x -= 2;
-                            } else {
-                                this.opponents[0].position.x -= 2;
-                                this.position.x -= 2;
-                            }
-                            break;
-                        case PersoState.RIGHT:
-                            if (this.direction == 1) {
-                                this.position.x -= 2;
-                                this.opponents[0].position.x -= 2;
-                            } else {
-                                this.position.x -= 2;
-                            }
-                            break;
-                        default:
-                            break;
+                    if (opponent.position.x > 0
+                        && this.isCollide(opponent)
+                        && [PersoState.IDLE, PersoState.CROUCH, PersoState.JUMP_UP, PersoState.JUMP_FWD, PersoState.JUMP_BWD].includes(opponent.currentPersoState)) {
+                        this.direction = this.getDirection(this.startPosition);
+                        switch (this.startPosition) {
+                            case PersoState.LEFT:
+                                if (this.direction == 1) {
+                                    this.position.x -= 2;
+                                } else {
+                                    opponent.position.x -= 2;
+                                    this.position.x -= 2;
+                                }
+                                break;
+                            case PersoState.RIGHT:
+                                if (this.direction == 1) {
+                                    this.position.x -= 2;
+                                    opponent.position.x -= 2;
+                                } else {
+                                    this.position.x -= 2;
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+
                     }
 
                 }
-
-
                 // Animation de marche possible au bord de la grille
-                if (this.anime.WALK_FWD.start > this.imgFrame || this.anime.WALK_FWD.end <= this.imgFrame)
+                if (this.anime.WALK_FWD.start > this.imgFrame || this.anime.WALK_FWD.end < this.imgFrame)
                     this.imgFrame = this.anime.WALK_FWD.start;
 
                 // calculer la direction pour débloquer le mouvement
@@ -357,7 +426,7 @@ export class Personnage {
                     //this.position.y -= this.cnvH;
                 }
                 /* Animation de saut */
-                if (this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end <= this.imgFrame) {
+                if (this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end < this.imgFrame) {
                     this.imgFrame = this.anime.JUMP_UP.start;
                 }
 
@@ -366,7 +435,7 @@ export class Personnage {
                 break;
             case 4: // S'ACCROUPIR
                 this.currentPersoState = PersoState.CROUCH;
-                if (this.anime.CROUCH.start > this.imgFrame || this.anime.CROUCH.end <= this.imgFrame) {
+                if (this.anime.CROUCH.start > this.imgFrame || this.anime.CROUCH.end < this.imgFrame) {
                     this.imgFrame = this.anime.CROUCH.start;
                 }
                 break;
@@ -377,7 +446,7 @@ export class Personnage {
                 }
                 if (this.position.x < this.cnv.width - this.cnvW)
                     this.position.x += 2;
-                if (this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end <= this.imgFrame) {
+                if (this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end < this.imgFrame) {
                     this.imgFrame = this.anime.JUMP_UP.start;
                 }
 
@@ -391,7 +460,7 @@ export class Personnage {
                     this.speed = - this.cnv.height;
                 }
                 if (this.position.x > 0) this.position.x -= 2;
-                if (this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end <= this.imgFrame) {
+                if (this.anime.JUMP_UP.start > this.imgFrame || this.anime.JUMP_UP.end < this.imgFrame) {
                     this.imgFrame = this.anime.JUMP_UP.start;
                 }
 
@@ -406,31 +475,33 @@ export class Personnage {
 
     action(value, time) {
         switch (value) {
-            case 0:
-                if (this.currentPersoState != PersoState.PUNCH) {
-                    this.makeDammage(time);
-                }
+
+            case 0: // PUNCH
                 this.currentPersoState = PersoState.PUNCH;
-                if (this.anime.PUNCH.start > this.imgFrame || this.anime.PUNCH.end <= this.imgFrame) {
+                if (this.anime.PUNCH.start > this.imgFrame || this.anime.PUNCH.end < this.imgFrame) {
                     this.imgFrame = this.anime.PUNCH.start;
                 }
+                this.makeDammage(time);
                 break;
-            case 1:
+
+            case 1: // KICK
                 this.currentPersoState = PersoState.KICK;
-                if (this.anime.KICK.start > this.imgFrame || this.anime.KICK.end <= this.imgFrame) {
+                if (this.anime.KICK.start > this.imgFrame || this.anime.KICK.end < this.imgFrame) {
                     this.imgFrame = this.anime.KICK.start;
                 }
                 this.makeDammage(time);
                 break;
-            case 2:
+
+            case 2: // DAMMAGE
                 this.currentPersoState = PersoState.DAMMAGE;
-                if (this.anime.DAMMAGE.start > this.imgFrame || this.anime.DAMMAGE.end <= this.imgFrame) {
+                if (this.anime.DAMMAGE.start > this.imgFrame || this.anime.DAMMAGE.end < this.imgFrame) {
                     this.imgFrame = this.anime.DAMMAGE.start;
                 }
                 break;
-            case 3:
+
+            case 3: // K.O
                 this.currentPersoState = PersoState.KO;
-                if (this.anime.KO.start > this.imgFrame || this.anime.KO.end <= this.imgFrame) {
+                if (this.anime.KO.start > this.imgFrame || this.anime.KO.end < this.imgFrame) {
                     this.imgFrame = this.anime.KO.start;
                 }
                 break;
@@ -440,40 +511,60 @@ export class Personnage {
     }
 
 
-    isCollide() {
+    isCollide(opponent) {
         // si mon polygon rentre en contact avec celui d'un autre joueur je retourne true
         // sinon je retourne false
         const response = new SAT.Response();
-        const collided = SAT.testPolygonPolygon(this.polygons, this.opponents[0].polygons, response);
+        const collided = SAT.testPolygonPolygon(this.polygons, opponent.polygons, response);
         return collided;
     }
+
+    isCollideWithTheFloor(platform) {
+        const pointA = this.polygons.points[1];
+        const pointB = this.polygons.points[2];
+        console.log(this.polygons);
+        const testA = SAT.pointInPolygon(pointA, platform);
+        const testB = SAT.pointInPolygon(pointB, platform);
+        if (testA && testB) {
+            return true;
+        }
+        return false;
+    }
+
 
     applyGravity(force) {
         this.acceleration += force;
     }
 
     getDirection(startPos) {
-        if (startPos == startPos.LEFT) {
-            if (this.position.x > this.opponents[0].position.x)
-                return -1;
-            return 1;
-        }
-        else {
-            if (this.position.x < this.opponents[0].position.x)
+        for (let opponent of this.opponents) {
+            if (startPos == startPos.LEFT) {
+                if (this.position.x > opponent.position.x)
+                    return -1;
                 return 1;
-            return -1;
+            }
+            else {
+                if (this.position.x < opponent.position.x)
+                    return 1;
+                return -1;
+            }
         }
     }
 
 
     makeDammage(time) {
-        this.collidingWithOpponent = this.isCollide();
-        if (this.opponents[0].hp > 0 && this.collidingWithOpponent && (this.currentPersoState == PersoState.PUNCH || this.currentPersoState == PersoState.KICK)) {
-            this.opponents[0].action(2);
-            this.opponents[0].hp -= 60 * time.secondsPassed;
-        }
-        if (this.opponents[0].hp < 0) {
-            this.opponents[0].action(3, time);
+        for (let opponent of this.opponents) {
+            /* D'abord être en collision avec l'adversaire */
+            if (this.isCollide(opponent)) {
+                /* L'adv à ses hp en positifs et que le joueur est entrain d'attaquer */
+                if (opponent.hp > 0 && (this.currentPersoState == PersoState.PUNCH || this.currentPersoState == PersoState.KICK)) {
+                    opponent.action(2); // Reçois des dommages
+                    opponent.hp -= 60 * time.secondsPassed; // -60 d'hp
+                }
+                if (opponent.hp < 0) {
+                    opponent.action(3, time); // Animation K.O
+                }
+            }
         }
     }
 
@@ -490,15 +581,3 @@ export class Personnage {
     }
 }
 
-
-function getRandomArbitrary(min, max) {
-    return Math.floor(Math.random() * (max - min) + min);
-}
-
-function findAndRemove(array, el) {
-    const index = array.indexOf(el)
-    if (index !== -1) {
-        array.splice(index, 1)
-    }
-    return array
-}

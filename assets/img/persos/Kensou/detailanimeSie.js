@@ -1,52 +1,52 @@
 export default {
-    nbFrames: 526,
+    nbFrames: 192,
     animations: [
         {
             name: "IDLE",
             start: 0,
-            end: 11
+            end: 5
         },
         {
             name: "WALK_FWD",
-            start: 12,
-            end: 16
+            start: 6,
+            end: 11
         },
         {
             name: "WALK_BWD",
             start: 12,
-            end: 16
+            end: 17
         },
         {
             name: "JUMP_UP",
-            start: 24,
-            end: 32,
+            start: 18,
+            end: 22,
         },
         {
             name: "CROUCH",
-            start: 33,
-            end: 34,
+            start: 39,
+            end: 40,
         },
         {
             name: "PUNCH",
-            start: 107,
-            end: 114,
+            start: 41,
+            end: 44,
         },
         {
             name: "KICK",
-            start: 134,
-            end: 140,
+            start: 50,
+            end: 52,
         },
         {
             name: "DAMMAGE",
-            start: 509,
-            end: 512,
+            start: 171,
+            end: 176,
         },
         {
             name: "KO",
-            start: 522,
-            end: 525,
+            start: 184,
+            end: 191,
         }
     ],
-    fileName: "Mai Shiranui_",
-    name: "Mai"
+    fileName: "Sie Kensou_",
+    name: "Kensou"
 };

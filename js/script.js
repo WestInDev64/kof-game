@@ -3,8 +3,8 @@ import { Menu } from "./Gui.js";
 
 const cnv = document.getElementById('myCanvas');
 const ctx = cnv.getContext('2d');
-cnv.style.width = window.document.innerWidth + "px";
-cnv.style.height = window.document.innerHeight + "px";
+//cnv.style.width = window.document.innerWidth + "px";
+//cnv.style.height = window.document.innerHeight + "px";
 
 ctx.imageSmoothingEnabled = false;
 
@@ -12,11 +12,8 @@ ctx.imageSmoothingEnabled = false;
 const audio = new Audio('assets/sound/ok.mp3');
 
 //Pour le boutton play
-let menu = true;
+let debug = false;
 
-const btn1Play = document.querySelector('#btnPlay');
-const btnRefresh = document.querySelector('#btnRefresh');
-const btnAudio = document.querySelector('#btnAudio');
 const coordMai = document.querySelector('#coord');
 
 const menuImage = new Menu({
@@ -35,27 +32,12 @@ let fps = {
 };
 
 
-//added for the button 
-btn1Play.addEventListener('click', function () {
-    game.init();
-    document.querySelector('#btnPlay').style.display = 'none'
-});
-
-btnRefresh.addEventListener('click', () => {
-    window.document.location.reload();
-});
-
-btnAudio.addEventListener('click', () => {
-    audio.play();
-});
-
 const game = new Game(cnv, ctx);
 game.start();
 //game.init();
 
 
 function update(time) {
-    window.requestAnimationFrame(update);
 
     fps = {
         secondsPassed: (time - fps.previous) / 1000,
@@ -66,7 +48,10 @@ function update(time) {
         case GameState.INTRO:
             game.introScene.draw();
             game.introScene.update(fps);
-            //game.introScene.music.play();
+            break;
+        case GameState.SELECT:
+            game.selectScene.draw();
+            game.selectScene.update(fps);
             break;
         case GameState.INGAME:
             game.update(fps);
@@ -74,16 +59,27 @@ function update(time) {
         default:
             break;
     }
-    if (!menu) {
+    if (debug) {
         coordMai.textContent = `Positions: 
-        Mai {${game.tabPlayer[0].position.x}, ${game.tabPlayer[0].position.y}} --- 
-        King  {${game.tabPlayer[1].position.x}, ${game.tabPlayer[1].position.y}}`;
+                        Mai {${game.tabPlayer[0].position.x}, ${game.tabPlayer[0].position.y}} --- 
+                        King  {${game.tabPlayer[1].position.x}, ${game.tabPlayer[1].position.y}}`;
     }
+    window.requestAnimationFrame(update);
 }
 
 
 
+function resizeCanvas() {
+    const baseW = cnv.width;
+    const baseH = cnv.height;
 
+    const w = window.innerWidth * 0.9;
+    const h = window.innerHeight * 0.9;
+
+
+    cnv.style.width =  w + "px";
+    cnv.style.height = h + "px";
+}
 
 /* Valeurs des paramètres :  
 img : Il indique l’image ou la vidéo à dessiner sur la toile.
@@ -99,51 +95,79 @@ hauteur : C’est un paramètre facultatif et indique la hauteur de l’image à
 
 /* Keyboard keydown autorisés */
 window.document.addEventListener('keydown', event => {
-    console.log(event.key);
-    switch (event.key) {
-        case "ArrowRight":
-        case "ArrowLeft":
-        case "ArrowUp":
-        case "ArrowDown":
-        case "w":
-        case "x":
-        case "c":
-        case "v":
-        case "d":
-        case "k":
-        case " ":
-            if (game.gameState == GameState.INTRO)
+    //console.log(event.key);
+    if (game.gameState == GameState.INTRO) {
+        switch (event.key) {
+            case "ArrowRight":
+            case "ArrowLeft":
+            case "ArrowUp":
+            case "ArrowDown":
+            case "w":
                 game.introScene.controlsKeyDown(event);
-            if (game.gameState == GameState.INGAME)
-                game.tabPlayer[0].controlsKeyDown(event);
-            break;
-        default:
-            break;
+                break;
+            default:
+                break;
+        }
+    }
+    else if (game.gameState == GameState.INGAME) {
+        switch (event.key) {
+            case "ArrowRight":
+            case "ArrowLeft":
+            case "ArrowUp":
+            case "ArrowDown":
+            case "w":
+            case "x":
+            case "c":
+            case "v":
+            case "d":
+            case "k":
+                game.mainPlayer.controlsKeyDown(event);
+                break;
+            default:
+                break;
+        }
+    }
+    else if (game.gameState == GameState.SELECT) {
+        switch (event.key) {
+            case "ArrowRight":
+            case "ArrowLeft":
+            case "ArrowUp":
+            case "ArrowDown":
+            case "w":
+            case "x":
+                game.selectScene.controlsKeyDown(event);
+                break;
+            default:
+                break;
+        }
     }
 });
 
 /* Keyboard keydown autorisés */
 window.document.addEventListener('keyup', event => {
-    switch (event.key) {
-        case "ArrowRight":
-        case "ArrowLeft":
-        case "ArrowUp":
-        case "ArrowDown":
-        case "w":
-        case "x":
-        case "c":
-        case "v":
-        case "d":
-        case "k":
-            if (game.gameState == GameState.INGAME)
-                game.tabPlayer[0].controlsKeyUp(event);
-            break;
+    if (game.gameState == GameState.INGAME) {
+
+        switch (event.key) {
+            case "ArrowRight":
+            case "ArrowLeft":
+            case "ArrowUp":
+            case "ArrowDown":
+            case "w":
+            case "x":
+            case "c":
+            case "v":
+            case "d":
+            case "k":
+                game.mainPlayer.controlsKeyUp(event);
+                break;
+        }
     }
 });
 
 window.requestAnimationFrame(update);
 
-
+window.onresize = resizeCanvas;
+resizeCanvas();
 //window.document.addEventListener('resize', game.onResize());
 
 

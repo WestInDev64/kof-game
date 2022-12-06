@@ -10,9 +10,11 @@ export class FpsCounter {
 
     draw() {
         this.ctx.font = "bold 20px Arial";
-        this.ctx.fillStyle = "black";
+        this.ctx.fillStyle = "orange";
+        this.ctx.strokeStyle='black';
         this.ctx.textAlign = "center";
         this.ctx.fillText(`FPS : ${this.fps}`, this.ctx.canvas.width / 2, 30);
+        this.ctx.strokeText(`FPS : ${this.fps}`, this.ctx.canvas.width / 2, 30);
     }
 }
 
@@ -28,13 +30,17 @@ export class Overlay {
     }
 
     draw() {
-        this.ctx.font = "bold 20px Arial";
+        this.ctx.font = "bold 16px Arial";
         this.ctx.strokeStyle='black';
-        this.ctx.fillStyle = "black";
+        this.ctx.fillStyle = "orange";
         this.ctx.textAlign = "left";
         this.ctx.fillText(`${this.game.tabPlayer[0].name} hp: ${Math.round(this.game.tabPlayer[0].hp)}%`, 30, 30);
-        this.ctx.fillText(`hp: ${Math.round(this.game.tabPlayer[1].hp)}%`, this.cnv.width - 100, 30);
-        this.ctx.stroke();
+        this.ctx.fillText(`${this.game.tabPlayer[1].name}. hp: ${Math.round(this.game.tabPlayer[1].hp)}%`, this.cnv.width * 0.7, 30);
+        this.ctx.fillText(`${this.game.tabPlayer[2].name} hp: ${Math.round(this.game.tabPlayer[2].hp)}%`, this.cnv.width *0.7, 50);
+        this.ctx.fillText(`${this.game.tabPlayer[3].name} hp: ${Math.round(this.game.tabPlayer[3].hp)}%`, this.cnv.width *0.7, 70);
+        this.ctx.fillText(`Press K to Quit`, this.cnv.width *0.02, this.cnv.height * 0.95);
+
+
     }
 
 }

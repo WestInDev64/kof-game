@@ -13,6 +13,8 @@ export class Scene {
         this.proceduralTab = [];
         this.platformW = 128 / 2;
         this.platformH = 120 / 8;
+        this.cnvW = 128/2;
+        this.cnvH = 120;
         this.spriteWidth;
         this.spriteHeight;
         this.platforms = [];
@@ -31,22 +33,24 @@ export class Scene {
     init() {
         this.loadBg();
         this.procedural();
-        this.spriteWidth = this.bgLayers[this.imgId].width;
-        this.spriteHeight = this.bgLayers[this.imgId].height;
-       /* for (let point of this.proceduralTab) {
+
+        for (let point of this.proceduralTab) {
+
             this.platforms.push(
                 new SAT.Box(
                     new SAT.Vector(
                         this.platformW * point.randJ,
-                        this.platformH * point.randI + (this.cnvH - this.cnvH / 16)),
+                        this.cnvH * point.randI + (this.cnvH - this.cnvH / 16)),
                     this.platformW,
                     this.platformH).toPolygon());
-        } */
+        }
+        
         // SOL
         this.platforms.push(
             new SAT.Box(new SAT.Vector(- 50, this.cnv.height - 5), this.cnv.width + 100, this.platformH).toPolygon());
 
-        //console.log(this.proceduralTab);
+        //console.table(this.platforms[1]);
+
     }
 
     /* Dessing Background */
@@ -112,13 +116,12 @@ export class Scene {
          * 3 eme tour / 4eme tour  : s'assurer au niv 2 que les plateformes sont accessibles
          * 5 eme tour : Placer des objets ( 2eme grille objet)   
          *  */
-        const gradient = this.ctx.createLinearGradient(0, 0, 0, this.cnv.height / 1.2);
-        gradient.addColorStop(0, "white");
-        gradient.addColorStop(1, "magenta");
-        this.ctx.fillStyle = gradient;
+        this.ctx.fillStyle = "darkgrey";
         for (let platform of this.platforms) {
             const box = platform.getAABBAsBox();
             this.ctx.fillRect(box.pos.x, box.pos.y, box.w, box.h);
+            this.ctx.strokeRect(box.pos.x, box.pos.y, box.w, box.h);
+            
         }
 
     }
