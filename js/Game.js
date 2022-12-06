@@ -8,7 +8,7 @@ import detailanimeTerry from "../assets/img/persos/Terry/detailanimeTerry.js";
 
 
 /* Anime Background */
-//import animebg from "../assets/img/bg/ruins/animebg.js";
+import animebg from "../assets/img/bg/ruins/animebg.js";
 import animebg2 from "../assets/img/bg/shion/animebg.js";
 import animebg3 from "../assets/img/bg/alley/animebg.js";
 
@@ -40,9 +40,9 @@ export class Game {
         this.gameOver = false;
         this.fps;
         this.timer;
-        this.bgFolder = ["shion", "alley"];                                    // 
-        this.nbFramesBg = [animebg2.nbFrames, animebg3.nbFrames];
-        this.bgAnime = [animebg2, animebg3];
+        this.bgFolder = ["shion", "alley", "ruins"];                                    // 
+        this.nbFramesBg = [animebg2.nbFrames, animebg3.nbFrames, animebg.nbFrames];
+        this.bgAnime = [ animebg2, animebg3, animebg];
         this.sound = {
             music: new Audio('assets/sound/ok.mp3'),
             kick: new Audio('assets/sound/kick.mp3')
@@ -113,7 +113,7 @@ export class Game {
     init(player1) {
         this.gameState = GameState.INGAME;
         /* Init backgrounds */
-        const randBg = Math.floor(Math.random() * 2);
+        const randBg = Math.floor(Math.random() * 3);
         this.scene = new Scene(this.cnv, this.ctx, this.bgFolder[randBg], this.nbFramesBg[randBg], this.bgAnime[randBg]);
         this.scene.init();
 
